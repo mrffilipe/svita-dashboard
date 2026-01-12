@@ -11,8 +11,8 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { api } from '../../config';
-import type { LoginRequest, AuthSession } from '../../types';
+import { authService } from '../../services';
+import type { LoginRequest } from '../../types';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -37,8 +37,7 @@ const Login = () => {
     setError(null);
 
     try {
-      const response = await api.post<AuthSession>('/api/Auth', formData);
-      const authSession = response.data;
+      const authSession = await authService.login(formData);
       
       localStorage.setItem('authSession', JSON.stringify(authSession));
       localStorage.setItem('idToken', authSession.idToken);

@@ -12,7 +12,7 @@ import {
   CircularProgress,
   Stack,
 } from '@mui/material';
-import { api } from '../../config';
+import { authService } from '../../services';
 import type { RegisterUserRequest } from '../../types';
 
 const Register = () => {
@@ -61,7 +61,7 @@ const Register = () => {
     setError(null);
 
     try {
-      await api.post('/api/Auth/register', formData);
+      await authService.register(formData);
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');

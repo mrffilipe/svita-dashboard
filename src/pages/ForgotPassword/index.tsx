@@ -11,7 +11,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { api } from '../../config';
+import { authService } from '../../services';
 import type { ForgotPasswordRequest } from '../../types';
 
 const ForgotPassword = () => {
@@ -36,7 +36,7 @@ const ForgotPassword = () => {
     setError(null);
 
     try {
-      await api.post('/api/Auth/forgot-password', formData);
+      await authService.forgotPassword(formData);
       setSuccess(true);
     } catch (err: any) {
       setError(
