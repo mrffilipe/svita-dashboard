@@ -12,6 +12,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { authService } from '../../services';
+import { extractIsPlatformAdmin } from '../../utils/jwt';
 import type { LoginRequest } from '../../types';
 
 const Login = () => {
@@ -39,7 +40,10 @@ const Login = () => {
     try {
       const authSession = await authService.login(formData);
       
-      localStorage.setItem('authSession', JSON.stringify(authSession));
+      const isPlatformAdmin = extractIsPlatformAdmin(authSession.idToken);
+      const sessionWithAdmin = { ...authSession, isPlatformAdmin };
+      
+      localStorage.setItem('authSession', JSON.stringify(sessionWithAdmin));
       localStorage.setItem('idToken', authSession.idToken);
       
       navigate('/');

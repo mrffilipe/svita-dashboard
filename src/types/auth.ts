@@ -24,6 +24,7 @@ export interface AuthSession {
   expiresAt: string;
   emailVerified: boolean;
   userId?: string;
+  isPlatformAdmin: boolean;
 }
 
 export interface RefreshTokenRequest {

@@ -1,6 +1,7 @@
-import { Box, Container, Typography, Button, Stack, Paper } from '@mui/material';
+import { Box, Container, Typography, Paper } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
+import NavigationMenu from '../../components/NavigationMenu';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -15,12 +16,6 @@ const Home = () => {
         }
     }, [navigate]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('authSession');
-        localStorage.removeItem('idToken');
-        navigate('/login');
-    };
-
     if (!isAuthenticated) {
         return null;
     }
@@ -34,7 +29,8 @@ const Home = () => {
                 px: 2,
             }}
         >
-            <Container maxWidth="lg">
+            <NavigationMenu />
+            <Container maxWidth="lg" sx={{ mt: 8 }}>
                 <Paper
                     elevation={0}
                     sx={{
@@ -63,29 +59,8 @@ const Home = () => {
                         variant="body1"
                         sx={{ mb: 4 }}
                     >
-                        Bem-vindo ao dashboard! Você está autenticado.
+                        Bem-vindo ao dashboard! Use o menu lateral para navegar.
                     </Typography>
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={2}
-                        justifyContent="center"
-                    >
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            size="large"
-                        >
-                            Dashboard
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            size="large"
-                            onClick={handleLogout}
-                        >
-                            Sair
-                        </Button>
-                    </Stack>
                 </Paper>
             </Container>
         </Box>
