@@ -20,6 +20,8 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PeopleIcon from '@mui/icons-material/People';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
@@ -60,6 +62,18 @@ const NavigationMenu = () => {
       text: 'Membros do Tenant', 
       icon: <PeopleIcon />, 
       path: '/tenant-members', 
+      show: true 
+    },
+    { 
+      text: 'Bases', 
+      icon: <LocationOnIcon />, 
+      path: '/bases', 
+      show: true 
+    },
+    { 
+      text: 'Veículos', 
+      icon: <DirectionsCarIcon />, 
+      path: '/vehicles', 
       show: true 
     },
   ];

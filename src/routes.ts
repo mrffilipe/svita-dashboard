@@ -7,6 +7,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import PlatformTenants from "./pages/PlatformTenants";
 import MyTenants from "./pages/MyTenants";
 import TenantMembers from "./pages/TenantMembers";
+import Bases from "./pages/Bases";
+import Vehicles from "./pages/Vehicles";
 
 const router = createBrowserRouter([
     { path: '/', index: true, Component: Home },
@@ -15,7 +17,9 @@ const router = createBrowserRouter([
     { path: '/forgot-password', Component: ForgotPassword },
     { path: '/platform-tenants', Component: PlatformTenants },
     { path: '/my-tenants', Component: MyTenants },
-    { path: '/tenant-members', Component: TenantMembers }
+    { path: '/tenant-members', Component: TenantMembers },
+    { path: '/bases', Component: Bases },
+    { path: '/vehicles', Component: Vehicles }
 ]);
 
 export default router
