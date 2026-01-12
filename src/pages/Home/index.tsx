@@ -25,12 +25,13 @@ const Home = () => {
             sx={{
                 minHeight: '100vh',
                 bgcolor: 'background.default',
-                py: 4,
+                pt: 12,
+                pb: 4,
                 px: 2,
             }}
         >
             <NavigationMenu />
-            <Container maxWidth="lg" sx={{ mt: 8 }}>
+            <Container maxWidth="lg">
                 <Paper
                     elevation={0}
                     sx={{

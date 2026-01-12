@@ -6,12 +6,15 @@ import CssBaseline from '@mui/material/CssBaseline'
 
 import theme from './theme'
 import router from './routes'
+import { TenantProvider } from './contexts/TenantContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <RouterProvider router={router} />
+      <TenantProvider>
+        <CssBaseline />
+        <RouterProvider router={router} />
+      </TenantProvider>
     </ThemeProvider>
   </StrictMode>,
 )

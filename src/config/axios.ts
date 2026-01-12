@@ -16,6 +16,14 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${accessToken}`;
       }
     }
+
+    if (config.url && config.url.includes('/tenants/{tenantKey}/')) {
+      const selectedTenantKey = localStorage.getItem('selectedTenantKey');
+      if (selectedTenantKey) {
+        config.url = config.url.replace('{tenantKey}', selectedTenantKey);
+      }
+    }
+
     return config;
   },
   (error) => {

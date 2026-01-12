@@ -11,6 +11,8 @@ import {
   Box,
   Divider,
   Typography,
+  AppBar,
+  Toolbar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
@@ -18,6 +20,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PeopleIcon from '@mui/icons-material/People';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
 const NavigationMenu = () => {
@@ -105,24 +108,26 @@ const NavigationMenu = () => {
 
   return (
     <>
-      <IconButton
-        color="primary"
-        aria-label="open menu"
-        onClick={() => setDrawerOpen(true)}
+      <AppBar
+        position="fixed"
+        elevation={1}
         sx={{
-          position: 'fixed',
-          top: 16,
-          left: 16,
           bgcolor: 'background.paper',
-          boxShadow: 2,
-          '&:hover': {
-            bgcolor: 'background.paper',
-            boxShadow: 4,
-          },
+          color: 'text.primary',
         }}
       >
-        <MenuIcon />
-      </IconButton>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <IconButton
+            color="primary"
+            aria-label="open menu"
+            onClick={() => setDrawerOpen(true)}
+            edge="start"
+          >
+            <MenuIcon />
+          </IconButton>
+          <TenantSelector />
+        </Toolbar>
+      </AppBar>
       <Drawer
         anchor="left"
         open={drawerOpen}

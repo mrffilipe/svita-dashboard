@@ -98,9 +98,9 @@ const PlatformTenants = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: 2 }}>
       <NavigationMenu />
-      <Container maxWidth="lg" sx={{ mt: 8 }}>
+      <Container maxWidth="lg">
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
