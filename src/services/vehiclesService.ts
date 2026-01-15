@@ -3,8 +3,7 @@ import type {
   RegisterVehicleRequest,
   VehicleDtoPagedResult,
   VehicleDto,
-  AssignDriverRequest,
-  UpdateVehicleCurrentLocationRequest,
+  StartShiftRequest,
 } from '../types';
 
 export const vehiclesService = {
@@ -26,22 +25,13 @@ export const vehiclesService = {
     return response.data;
   },
 
-  assignDriver: async (plate: string, data: AssignDriverRequest): Promise<void> => {
-    await api.post(`/api/tenants/{tenantKey}/Vehicles/${plate}/assign-driver`, data);
+  startShift: async (plate: string, data: StartShiftRequest): Promise<void> => {
+    await api.post(`/api/tenants/{tenantKey}/Vehicles/${plate}/start-shift`, data);
   },
 
-  unassignDriver: async (vehicleAssignmentId: string): Promise<void> => {
-    await api.post('/api/tenants/{tenantKey}/Vehicles/unassign-driver', null, {
-      params: { vehicleAssignmentId },
-    });
-  },
-
-  updateCurrentLocation: async (
-    vehicleAssignmentId: string,
-    data: UpdateVehicleCurrentLocationRequest
-  ): Promise<void> => {
-    await api.put('/api/tenants/{tenantKey}/Vehicles/current-location', data, {
-      params: { vehicleAssignmentId },
+  endShift: async (driverShiftId: string): Promise<void> => {
+    await api.post('/api/tenants/{tenantKey}/Vehicles/end-shift', null, {
+      params: { driverShiftId },
     });
   },
 };

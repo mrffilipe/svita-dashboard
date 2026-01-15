@@ -36,11 +36,14 @@ export interface VehicleDtoPagedResult {
   totalPages: number;
 }
 
-export interface AssignDriverRequest {
-  driverId: string;
-}
-
-export interface UpdateVehicleCurrentLocationRequest {
-  latitude: number;
-  longitude: number;
+export interface StartShiftRequest {
+  driverTenantUserId: string;
+  startingLocation: {
+    coordinate: {
+      latitude: number;
+      longitude: number;
+    };
+    speed?: number;
+    timestamp: string;
+  };
 }

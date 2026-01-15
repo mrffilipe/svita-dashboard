@@ -22,6 +22,8 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import PersonIcon from '@mui/icons-material/Person';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
@@ -46,6 +48,12 @@ const NavigationMenu = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <HomeIcon />, path: '/', show: true },
+    { 
+      text: 'Meu Perfil', 
+      icon: <PersonIcon />, 
+      path: '/profile', 
+      show: true 
+    },
     { 
       text: 'Meus Tenants', 
       icon: <BusinessIcon />, 
@@ -74,6 +82,12 @@ const NavigationMenu = () => {
       text: 'Veículos', 
       icon: <DirectionsCarIcon />, 
       path: '/vehicles', 
+      show: true 
+    },
+    { 
+      text: 'Motoristas', 
+      icon: <LocalShippingIcon />, 
+      path: '/drivers', 
       show: true 
     },
   ];
