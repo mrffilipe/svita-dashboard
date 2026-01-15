@@ -12,6 +12,7 @@ import Vehicles from "./pages/Vehicles";
 import UserProfile from "./pages/UserProfile";
 import Drivers from "./pages/Drivers";
 import Requests from "./pages/Requests";
+import Occurrences from "./pages/Occurrences";
 
 const router = createBrowserRouter([
     { path: '/', index: true, Component: Home },
@@ -25,7 +26,8 @@ const router = createBrowserRouter([
     { path: '/vehicles', Component: Vehicles },
     { path: '/profile', Component: UserProfile },
     { path: '/drivers', Component: Drivers },
-    { path: '/requests', Component: Requests }
+    { path: '/requests', Component: Requests },
+    { path: '/occurrences', Component: Occurrences }
 ]);
 
 export default router

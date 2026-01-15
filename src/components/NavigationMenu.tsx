@@ -25,6 +25,7 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import EmergencyIcon from '@mui/icons-material/Emergency';
 import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
@@ -95,6 +96,12 @@ const NavigationMenu = () => {
       text: 'Minhas Solicitações', 
       icon: <AssignmentIcon />, 
       path: '/requests', 
+      show: true 
+    },
+    { 
+      text: 'Ocorrências', 
+      icon: <EmergencyIcon />, 
+      path: '/occurrences', 
       show: true 
     },
   ];
