@@ -36,17 +36,17 @@ export interface MyTenantDto {
   tenantId: string;
   tenantKey: string;
   tenantName: string;
-  tenantMembershipId: string;
+  tenantUserId: string;
   role: TenantMemberRole;
   status: TenantMemberStatus;
 }
 
-export interface RegisterTenantMemberRequest {
+export interface AddTenantUserRequest {
   email: string;
   role: TenantMemberRole;
 }
 
-export interface TenantMembersListDto {
+export interface TenantUsersListDto {
   id: string;
   name: string;
   email: string;
@@ -56,8 +56,8 @@ export interface TenantMembersListDto {
   updatedAt: string;
 }
 
-export interface TenantMembersListDtoPagedResult {
-  items: TenantMembersListDto[];
+export interface TenantUsersListDtoPagedResult {
+  items: TenantUsersListDto[];
   page: number;
   pageSize: number;
   totalItems: number;

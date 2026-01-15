@@ -1,20 +1,20 @@
 import { api } from '../config';
 import type {
-  RegisterTenantMemberRequest,
-  TenantMembersListDtoPagedResult,
+  AddTenantUserRequest,
+  TenantUsersListDtoPagedResult,
 } from '../types';
 
-export const tenantMembersService = {
-  create: async (data: RegisterTenantMemberRequest): Promise<void> => {
-    await api.post('/api/tenants/{tenantKey}/TenantMembers', data);
+export const tenantUsersService = {
+  create: async (data: AddTenantUserRequest): Promise<void> => {
+    await api.post('/api/tenants/{tenantKey}/TenantUsers', data);
   },
 
   list: async (
     page: number = 1,
     pageSize: number = 10
-  ): Promise<TenantMembersListDtoPagedResult> => {
-    const response = await api.get<TenantMembersListDtoPagedResult>(
-      '/api/tenants/{tenantKey}/TenantMembers',
+  ): Promise<TenantUsersListDtoPagedResult> => {
+    const response = await api.get<TenantUsersListDtoPagedResult>(
+      '/api/tenants/{tenantKey}/TenantUsers',
       {
         params: { Page: page, PageSize: pageSize },
       }
@@ -22,3 +22,6 @@ export const tenantMembersService = {
     return response.data;
   },
 };
+
+// Legacy export for backward compatibility
+export const tenantMembersService = tenantUsersService;

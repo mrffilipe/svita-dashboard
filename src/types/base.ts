@@ -6,9 +6,13 @@ export type BaseType =
   | 'MunicipalGarage' 
   | 'Other';
 
-export interface Location {
+export interface GeoCoordinate {
   latitude: number;
   longitude: number;
+}
+
+export interface Location {
+  coordinate: GeoCoordinate;
   address?: string;
   complement?: string;
 }

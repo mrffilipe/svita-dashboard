@@ -47,8 +47,10 @@ const Bases = () => {
     name: '',
     type: 'Hospital',
     location: {
-      latitude: 0,
-      longitude: 0,
+      coordinate: {
+        latitude: 0,
+        longitude: 0,
+      },
       address: '',
       complement: '',
     },
@@ -79,15 +81,25 @@ const Bases = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (name.startsWith('location.')) {
+    if (name.startsWith('location.coordinate.')) {
+      const coordField = name.split('.')[2] as 'latitude' | 'longitude';
+      setFormData({
+        ...formData,
+        location: {
+          ...formData.location,
+          coordinate: {
+            ...formData.location.coordinate,
+            [coordField]: parseFloat(value) || 0,
+          },
+        },
+      });
+    } else if (name.startsWith('location.')) {
       const locationField = name.split('.')[1];
       setFormData({
         ...formData,
         location: {
           ...formData.location,
-          [locationField]: locationField === 'latitude' || locationField === 'longitude' 
-            ? parseFloat(value) || 0 
-            : value,
+          [locationField]: value,
         },
       });
     } else {
@@ -123,8 +135,10 @@ const Bases = () => {
         name: '',
         type: 'Hospital',
         location: {
-          latitude: 0,
-          longitude: 0,
+          coordinate: {
+            latitude: 0,
+            longitude: 0,
+          },
           address: '',
           complement: '',
         },
@@ -293,20 +307,20 @@ const Bases = () => {
                 required
                 fullWidth
                 label="Latitude"
-                name="location.latitude"
+                name="location.coordinate.latitude"
                 type="number"
                 inputProps={{ step: 'any' }}
-                value={formData.location.latitude}
+                value={formData.location.coordinate.latitude}
                 onChange={handleChange}
               />
               <TextField
                 required
                 fullWidth
                 label="Longitude"
-                name="location.longitude"
+                name="location.coordinate.longitude"
                 type="number"
                 inputProps={{ step: 'any' }}
-                value={formData.location.longitude}
+                value={formData.location.coordinate.longitude}
                 onChange={handleChange}
               />
               <TextField

@@ -8,10 +8,13 @@ export interface RegisterVehicleRequest {
   baseId: string;
 }
 
-export interface BaseDto {
+export interface BaseSummaryDto {
   id: string;
   name: string;
   code: string;
+  type: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface VehicleDto {
@@ -20,7 +23,7 @@ export interface VehicleDto {
   model: string;
   year: number;
   type: VehicleType;
-  base: BaseDto;
+  base: BaseSummaryDto;
   createdAt: string;
   updatedAt: string;
 }

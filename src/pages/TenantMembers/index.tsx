@@ -28,14 +28,14 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NavigationMenu from '../../components/NavigationMenu';
-import { tenantMembersService } from '../../services';
+import { tenantUsersService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
-import type { TenantMembersListDto, RegisterTenantMemberRequest, TenantMemberRole } from '../../types';
+import type { TenantUsersListDto, AddTenantUserRequest, TenantMemberRole } from '../../types';
 
 const TenantMembers = () => {
   const { selectedTenantKey } = useTenant();
   
-  const [members, setMembers] = useState<TenantMembersListDto[]>([]);
+  const [members, setMembers] = useState<TenantUsersListDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -43,7 +43,7 @@ const TenantMembers = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [formData, setFormData] = useState<RegisterTenantMemberRequest>({
+  const [formData, setFormData] = useState<AddTenantUserRequest>({
     email: '',
     role: 'User',
   });
@@ -57,7 +57,7 @@ const TenantMembers = () => {
 
     setLoading(true);
     try {
-      const result = await tenantMembersService.list(page + 1, pageSize);
+      const result = await tenantUsersService.list(page + 1, pageSize);
       setMembers(result.items);
       setTotalItems(result.totalItems);
     } catch (err: any) {
@@ -96,7 +96,7 @@ const TenantMembers = () => {
     }
 
     try {
-      await tenantMembersService.create(formData);
+      await tenantUsersService.create(formData);
       setSuccess('Membro adicionado com sucesso!');
       setOpenDialog(false);
       setFormData({
