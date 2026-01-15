@@ -24,6 +24,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
@@ -88,6 +89,12 @@ const NavigationMenu = () => {
       text: 'Motoristas', 
       icon: <LocalShippingIcon />, 
       path: '/drivers', 
+      show: true 
+    },
+    { 
+      text: 'Minhas Solicitações', 
+      icon: <AssignmentIcon />, 
+      path: '/requests', 
       show: true 
     },
   ];

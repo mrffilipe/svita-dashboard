@@ -11,6 +11,7 @@ import Bases from "./pages/Bases";
 import Vehicles from "./pages/Vehicles";
 import UserProfile from "./pages/UserProfile";
 import Drivers from "./pages/Drivers";
+import Requests from "./pages/Requests";
 
 const router = createBrowserRouter([
     { path: '/', index: true, Component: Home },
@@ -23,7 +24,8 @@ const router = createBrowserRouter([
     { path: '/bases', Component: Bases },
     { path: '/vehicles', Component: Vehicles },
     { path: '/profile', Component: UserProfile },
-    { path: '/drivers', Component: Drivers }
+    { path: '/drivers', Component: Drivers },
+    { path: '/requests', Component: Requests }
 ]);
 
 export default router
