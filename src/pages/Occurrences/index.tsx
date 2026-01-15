@@ -33,11 +33,14 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CloseIcon from '@mui/icons-material/Close';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
 import { dispatchService, driversService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import { useSignalR } from '../../hooks/useSignalR';
 import type { RequestDto, DriverStatusDto, PriorityOccurrence } from '../../types';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const Occurrences = () => {
   const { selectedTenantKey } = useTenant();
@@ -52,12 +55,51 @@ const Occurrences = () => {
   const [selectedDriverShiftId, setSelectedDriverShiftId] = useState<string>('');
   const [selectedPriority, setSelectedPriority] = useState<PriorityOccurrence>('Medium');
   const [loadingAssign, setLoadingAssign] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: -14.2350, lng: -51.9253 });
+  const [selectedDriverInfo, setSelectedDriverInfo] = useState<DriverStatusDto | null>(null);
 
   useEffect(() => {
     if (selectedTenantKey) {
       fetchDrivers();
+      
+      // Atualizar motoristas a cada 5 segundos
+      const interval = setInterval(() => {
+        fetchDrivers();
+      }, 5000);
+      
+      return () => clearInterval(interval);
     }
   }, [selectedTenantKey]);
+
+  useEffect(() => {
+    // Calcular centro do mapa baseado nas localizações de requests e drivers
+    const allCoordinates: { lat: number; lng: number }[] = [];
+
+    requests.forEach((request) => {
+      if (request.pickup.coordinate) {
+        allCoordinates.push({
+          lat: request.pickup.coordinate.latitude,
+          lng: request.pickup.coordinate.longitude,
+        });
+      }
+    });
+
+    drivers.forEach((driver) => {
+      if (driver.activeShift?.currentLocation?.coordinate) {
+        allCoordinates.push({
+          lat: driver.activeShift.currentLocation.coordinate.latitude,
+          lng: driver.activeShift.currentLocation.coordinate.longitude,
+        });
+      }
+    });
+
+    if (allCoordinates.length > 0) {
+      const avgLat = allCoordinates.reduce((sum, coord) => sum + coord.lat, 0) / allCoordinates.length;
+      const avgLng = allCoordinates.reduce((sum, coord) => sum + coord.lng, 0) / allCoordinates.length;
+      setMapCenter({ lat: avgLat, lng: avgLng });
+      console.log(`Map updated: ${requests.length} requests, ${drivers.length} drivers`);
+    }
+  }, [requests, drivers]);
 
   const fetchDrivers = async () => {
     if (!selectedTenantKey) return;
@@ -248,16 +290,110 @@ const Occurrences = () => {
               <CircularProgress sx={{ mr: 2 }} />
               <Typography>Conectando ao servidor em tempo real...</Typography>
             </Box>
-          ) : requests.length === 0 ? (
-            <Alert severity="info">
-              Nenhuma solicitação disponível no momento. As solicitações aparecerão aqui em tempo real.
-            </Alert>
           ) : (
             <>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {requests.length} {requests.length === 1 ? 'solicitação disponível' : 'solicitações disponíveis'}
-              </Typography>
-              <TableContainer>
+              {/* Google Maps */}
+              <Box sx={{ mb: 3, height: 500, borderRadius: 2, overflow: 'hidden' }}>
+                <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                  <Map
+                    defaultCenter={mapCenter}
+                    defaultZoom={4}
+                    mapId="occurrences-map"
+                    gestureHandling="greedy"
+                  >
+                    {/* Markers para requests (pacientes) */}
+                    {requests.map((request) => (
+                      request.pickup.coordinate && (
+                        <AdvancedMarker
+                          key={`request-${request.id}`}
+                          position={{
+                            lat: request.pickup.coordinate.latitude,
+                            lng: request.pickup.coordinate.longitude,
+                          }}
+                        >
+                          <Pin
+                            background="#ef4444"
+                            borderColor="#991b1b"
+                            glyphColor="#ffffff"
+                          />
+                        </AdvancedMarker>
+                      )
+                    ))}
+
+                    {/* Markers para motoristas (ambulâncias) */}
+                    {drivers.map((driver) => (
+                      driver.activeShift?.currentLocation?.coordinate && (
+                        <AdvancedMarker
+                          key={`driver-${driver.driverProfileId}`}
+                          position={{
+                            lat: driver.activeShift.currentLocation.coordinate.latitude,
+                            lng: driver.activeShift.currentLocation.coordinate.longitude,
+                          }}
+                          onClick={() => setSelectedDriverInfo(driver)}
+                        >
+                          <div style={{
+                            background: '#10b981',
+                            borderRadius: '50%',
+                            width: 40,
+                            height: 40,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '3px solid #065f46',
+                            fontSize: '20px',
+                            cursor: 'pointer',
+                          }}>
+                            🚑
+                          </div>
+                        </AdvancedMarker>
+                      )
+                    ))}
+
+                    {/* InfoWindow para mostrar informações do motorista */}
+                    {selectedDriverInfo && selectedDriverInfo.activeShift?.currentLocation?.coordinate && (
+                      <InfoWindow
+                        position={{
+                          lat: selectedDriverInfo.activeShift.currentLocation.coordinate.latitude,
+                          lng: selectedDriverInfo.activeShift.currentLocation.coordinate.longitude,
+                        }}
+                        onCloseClick={() => setSelectedDriverInfo(null)}
+                      >
+                        <Box sx={{ p: 1, minWidth: 200 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                            {selectedDriverInfo.name}
+                          </Typography>
+                          <Divider sx={{ mb: 1 }} />
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Status:</strong> {selectedDriverInfo.isOnline ? 'Online' : 'Offline'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Veículo:</strong> {selectedDriverInfo.activeShift.vehicle.model}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Placa:</strong> {selectedDriverInfo.activeShift.vehicle.plate}
+                          </Typography>
+                          {selectedDriverInfo.activeShift.currentLocation.speed !== undefined && (
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Velocidade:</strong> {selectedDriverInfo.activeShift.currentLocation.speed.toFixed(0)} km/h
+                            </Typography>
+                          )}
+                        </Box>
+                      </InfoWindow>
+                    )}
+                  </Map>
+                </APIProvider>
+              </Box>
+
+              {requests.length === 0 ? (
+                <Alert severity="info">
+                  Nenhuma solicitação disponível no momento. As solicitações aparecerão aqui em tempo real.
+                </Alert>
+              ) : (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {requests.length} {requests.length === 1 ? 'solicitação disponível' : 'solicitações disponíveis'}
+                  </Typography>
+                  <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -328,6 +464,8 @@ const Occurrences = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+                </>
+              )}
             </>
           )}
         </Paper>
