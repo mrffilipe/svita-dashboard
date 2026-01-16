@@ -108,13 +108,16 @@ const NavigationMenu = () => {
 
   const drawer = (
     <Box sx={{ width: 280 }} role="presentation">
-      <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          SVita Dashboard
-        </Typography>
-        <Typography variant="caption">
-          Sistema de Gestão de Saúde
-        </Typography>
+      <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
+        <img src="/logo.svg" alt="SVita Logo" style={{ width: 40, height: 40 }} />
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            SVita Dashboard
+          </Typography>
+          <Typography variant="caption">
+            Sistema de Gestão de Saúde
+          </Typography>
+        </Box>
       </Box>
       <Divider />
       <List>
@@ -159,14 +162,17 @@ const NavigationMenu = () => {
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <IconButton
-            color="primary"
-            aria-label="open menu"
-            onClick={() => setDrawerOpen(true)}
-            edge="start"
-          >
-            <MenuIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton
+              color="primary"
+              aria-label="open menu"
+              onClick={() => setDrawerOpen(true)}
+              edge="start"
+            >
+              <MenuIcon />
+            </IconButton>
+            <img src="/logo.svg" alt="SVita Logo" style={{ width: 32, height: 32 }} />
+          </Box>
           <TenantSelector />
         </Toolbar>
       </AppBar>

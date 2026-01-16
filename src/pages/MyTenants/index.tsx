@@ -72,7 +72,7 @@ const MyTenants = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: 2 }}>
       <NavigationMenu />
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
             Meus Tenants

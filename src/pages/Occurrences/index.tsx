@@ -4,12 +4,6 @@ import {
   Container,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Alert,
   CircularProgress,
   Stack,
@@ -219,81 +213,90 @@ const Occurrences = () => {
     }
   };
 
-  const getPriorityLabel = (priority: PriorityOccurrence) => {
-    switch (priority) {
-      case 'VeryHigh':
-        return 'Muito Alta';
-      case 'High':
-        return 'Alta';
-      case 'Medium':
-        return 'Média';
-      case 'Low':
-        return 'Baixa';
-      case 'VeryLow':
-        return 'Muito Baixa';
-      default:
-        return priority;
-    }
-  };
+  // const getPriorityLabel = (priority: PriorityOccurrence) => {
+  //   switch (priority) {
+  //     case 'VeryHigh':
+  //       return 'Muito Alta';
+  //     case 'High':
+  //       return 'Alta';
+  //     case 'Medium':
+  //       return 'Média';
+  //     case 'Low':
+  //       return 'Baixa';
+  //     case 'VeryLow':
+  //       return 'Muito Baixa';
+  //     default:
+  //       return priority;
+  //   }
+  // };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: 2 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: { xs: 2, md: 6 } }}>
       <NavigationMenu />
-      <Container maxWidth="xl">
-        <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ xs: 'stretch', sm: 'center' }}
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <LocalShippingIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-              <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                Ocorrências em Tempo Real
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  bgcolor: isConnected ? 'success.main' : 'error.main',
-                }}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {isConnected ? 'Conectado' : 'Desconectado'}
-              </Typography>
-            </Stack>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 8 } }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          spacing={2}
+          sx={{ mb: 3 }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <LocalShippingIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+            <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+              Ocorrências em Tempo Real
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: isConnected ? 'success.main' : 'error.main',
+              }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {isConnected ? 'Conectado' : 'Desconectado'}
+            </Typography>
           </Stack>
+        </Stack>
 
-          {(error || signalRError) && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-              {error || signalRError}
-            </Alert>
-          )}
+        {(error || signalRError) && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+            {error || signalRError}
+          </Alert>
+        )}
 
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-              {success}
-            </Alert>
-          )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
+            {success}
+          </Alert>
+        )}
 
-          {!selectedTenantKey ? (
-            <Alert severity="warning">
-              Selecione um tenant para visualizar as ocorrências em tempo real.
-            </Alert>
-          ) : !isConnected ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
-              <CircularProgress sx={{ mr: 2 }} />
-              <Typography>Conectando ao servidor em tempo real...</Typography>
-            </Box>
-          ) : (
-            <>
-              {/* Google Maps */}
-              <Box sx={{ mb: 3, height: 500, borderRadius: 2, overflow: 'hidden' }}>
+        {!selectedTenantKey ? (
+          <Alert severity="warning">
+            Selecione um tenant para visualizar as ocorrências em tempo real.
+          </Alert>
+        ) : !isConnected ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+            <CircularProgress sx={{ mr: 2 }} />
+            <Typography>Conectando ao servidor em tempo real...</Typography>
+          </Box>
+        ) : (
+          <Grid container spacing={3}>
+            {/* Mapa - Lado Esquerdo */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Box 
+                sx={{ 
+                  width: '100%',
+                  aspectRatio: '4/3',
+                  maxHeight: '600px',
+                  borderRadius: 2, 
+                  overflow: 'hidden',
+                  boxShadow: 2,
+                }}
+              >
                 <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
                   <Map
                     defaultCenter={mapCenter}
@@ -383,92 +386,106 @@ const Occurrences = () => {
                   </Map>
                 </APIProvider>
               </Box>
+            </Grid>
 
-              {requests.length === 0 ? (
-                <Alert severity="info">
-                  Nenhuma solicitação disponível no momento. As solicitações aparecerão aqui em tempo real.
-                </Alert>
-              ) : (
-                <>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {requests.length} {requests.length === 1 ? 'solicitação disponível' : 'solicitações disponíveis'}
+            {/* Lista de Solicitações - Lado Direito */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper 
+                elevation={2} 
+                sx={{ 
+                  height: { xs: 'auto', md: '600px' },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 2,
+                }}
+              >
+                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Solicitações Disponíveis
                   </Typography>
-                  <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Data</TableCell>
-                      <TableCell>Tipo</TableCell>
-                      <TableCell>Paciente</TableCell>
-                      <TableCell>Local de Coleta</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Ações</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {requests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell>
-                          {new Date(request.createdAt).toLocaleString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getOccurrenceTypeLabel(request.aboutOccurrence.type)}
-                            size="small"
-                            color={request.aboutOccurrence.type === 'Emergency' ? 'error' : 'default'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {request.patient ? (
-                            <Box>
-                              <Typography variant="body2">{request.patient.name}</Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {request.patient.phone.value}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary">
-                              Não informado
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {request.pickup.address}
-                          </Typography>
-                          {request.pickup.complement && (
-                            <Typography variant="caption" color="text.secondary">
-                              {request.pickup.complement}
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStatusLabel(request.status)}
-                            color={getStatusColor(request.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            color="primary"
-                            size="small"
-                            onClick={() => handleOpenAssignDialog(request)}
-                            title="Atribuir ocorrência"
-                          >
-                            <AssignmentIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-                </>
-              )}
-            </>
-          )}
-        </Paper>
+                  <Typography variant="body2" color="text.secondary">
+                    {requests.length} {requests.length === 1 ? 'solicitação' : 'solicitações'}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+                  {requests.length === 0 ? (
+                    <Alert severity="info">
+                      Nenhuma solicitação disponível no momento.
+                    </Alert>
+                  ) : (
+                    <Stack spacing={2}>
+                      {requests.map((request) => (
+                        <Card key={request.id} variant="outlined" sx={{ '&:hover': { boxShadow: 2 } }}>
+                          <CardContent>
+                            <Stack spacing={1.5}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                <Chip
+                                  label={getOccurrenceTypeLabel(request.aboutOccurrence.type)}
+                                  size="small"
+                                  color={request.aboutOccurrence.type === 'Emergency' ? 'error' : 'default'}
+                                />
+                                <Chip
+                                  label={getStatusLabel(request.status)}
+                                  color={getStatusColor(request.status)}
+                                  size="small"
+                                />
+                              </Box>
+
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  Data
+                                </Typography>
+                                <Typography variant="body2">
+                                  {new Date(request.createdAt).toLocaleString('pt-BR')}
+                                </Typography>
+                              </Box>
+
+                              {request.patient && (
+                                <Box>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Paciente
+                                  </Typography>
+                                  <Typography variant="body2">{request.patient.name}</Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {request.patient.phone.value}
+                                  </Typography>
+                                </Box>
+                              )}
+
+                              <Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  Local de Coleta
+                                </Typography>
+                                <Typography variant="body2">
+                                  {request.pickup.address}
+                                </Typography>
+                                {request.pickup.complement && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {request.pickup.complement}
+                                  </Typography>
+                                )}
+                              </Box>
+
+                              <Button
+                                variant="contained"
+                                fullWidth
+                                startIcon={<AssignmentIcon />}
+                                onClick={() => handleOpenAssignDialog(request)}
+                              >
+                                Atribuir Ocorrência
+                              </Button>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Stack>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        )}
       </Container>
 
       <Dialog 
