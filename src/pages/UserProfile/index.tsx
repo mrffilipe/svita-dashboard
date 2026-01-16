@@ -19,6 +19,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import NavigationMenu from '../../components/NavigationMenu';
 import { userService } from '../../services';
 import type { UserDto } from '../../types';
+import { formatCpfCnpj, formatEmail, formatPhone } from '../../utils';
 
 const UserProfile = () => {
   const [user, setUser] = useState<UserDto | null>(null);
@@ -117,7 +118,7 @@ const UserProfile = () => {
                   <TextField
                     fullWidth
                     label="Email"
-                    value={user.email}
+                    value={formatEmail(user.email)}
                     InputProps={{
                       readOnly: true,
                       startAdornment: <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />,
@@ -128,31 +129,21 @@ const UserProfile = () => {
                   <TextField
                     fullWidth
                     label="Telefone"
-                    value={user.phone}
+                    value={formatPhone(user.phone)}
                     InputProps={{
                       readOnly: true,
                       startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />,
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label="CPF/CNPJ"
-                    value={user.cpfCnpj}
+                    value={formatCpfCnpj(user.cpfCnpj)}
                     InputProps={{
                       readOnly: true,
                       startAdornment: <BadgeIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="ID Externo"
-                    value={user.externalAuthId}
-                    InputProps={{
-                      readOnly: true,
                     }}
                   />
                 </Grid>

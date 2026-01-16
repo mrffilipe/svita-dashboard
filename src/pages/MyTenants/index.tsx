@@ -19,6 +19,7 @@ import { platformTenantsService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { MyTenantDto } from '../../types';
 import { useNavigate } from 'react-router';
+import { translateTenantMemberRole, translateTenantMemberStatus } from '../../utils';
 
 const MyTenants = () => {
   const navigate = useNavigate();
@@ -109,12 +110,12 @@ const MyTenants = () => {
                       </Box>
                       <Stack direction="row" spacing={1}>
                         <Chip
-                          label={tenant.role}
+                          label={translateTenantMemberRole(tenant.role)}
                           color={getRoleColor(tenant.role)}
                           size="small"
                         />
                         <Chip
-                          label={tenant.status}
+                          label={translateTenantMemberStatus(tenant.status)}
                           color={getStatusColor(tenant.status)}
                           size="small"
                         />

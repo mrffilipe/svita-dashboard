@@ -88,26 +88,36 @@ const TenantSelector = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2 }}>
-      <BusinessIcon sx={{ color: 'primary.main', fontSize: 20 }} />
-      <FormControl size="small" sx={{ minWidth: 200 }}>
+      <BusinessIcon sx={{ color: 'primary.main', fontSize: 18 }} />
+      <FormControl size="small" sx={{ minWidth: 180 }}>
         <Select
           value={selectedTenantKey || ''}
           onChange={handleChange}
           displayEmpty
           sx={{
             bgcolor: 'background.paper',
+            height: 36,
             '& .MuiSelect-select': {
               py: 1,
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(0, 0, 0, 0.12)',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'primary.main',
             },
           }}
         >
           {tenants.map((tenant) => (
-            <MenuItem key={tenant.key} value={tenant.key}>
+            <MenuItem key={tenant.key} value={tenant.key} sx={{ py: 1 }}>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.875rem', lineHeight: 1.4 }}>
                   {tenant.key}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}>
                   {tenant.name}
                 </Typography>
               </Box>

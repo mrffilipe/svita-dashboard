@@ -31,6 +31,7 @@ import NavigationMenu from '../../components/NavigationMenu';
 import { vehiclesService, basesService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { VehicleDto, RegisterVehicleRequest, VehicleType, BaseListDto } from '../../types';
+import { translateVehicleType } from '../../utils';
 
 const Vehicles = () => {
   const { selectedTenantKey } = useTenant();
@@ -141,13 +142,6 @@ const Vehicles = () => {
     }
   };
 
-  const getVehicleTypeLabel = (type: VehicleType) => {
-    const labels: Record<VehicleType, string> = {
-      Ambulance: 'Ambulância',
-      Other: 'Outro',
-    };
-    return labels[type];
-  };
 
   const getVehicleTypeColor = (type: VehicleType) => {
     const colors: Record<VehicleType, 'error' | 'default'> = {
@@ -225,7 +219,7 @@ const Vehicles = () => {
                         <TableCell>{vehicle.year}</TableCell>
                         <TableCell>
                           <Chip
-                            label={getVehicleTypeLabel(vehicle.type)}
+                            label={translateVehicleType(vehicle.type)}
                             color={getVehicleTypeColor(vehicle.type)}
                             size="small"
                           />

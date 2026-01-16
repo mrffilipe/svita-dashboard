@@ -198,9 +198,9 @@ const Occurrences = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: { xs: 2, md: 8 } }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: { xs: 2, md: 10 } }}>
       <NavigationMenu />
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 10 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 12 } }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           justifyContent="space-between"
@@ -270,6 +270,10 @@ const Occurrences = () => {
                     defaultZoom={4}
                     mapId="occurrences-map"
                     gestureHandling="greedy"
+                    disableDefaultUI={false}
+                    streetViewControl={false}
+                    mapTypeControl={false}
+                    fullscreenControl={false}
                   >
                     {/* Markers para requests (pacientes) */}
                     {requests.map((request) => (

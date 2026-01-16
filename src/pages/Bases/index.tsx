@@ -31,6 +31,7 @@ import NavigationMenu from '../../components/NavigationMenu';
 import { basesService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { BaseListDto, RegisterBaseRequest, BaseType } from '../../types';
+import { translateBaseType } from '../../utils';
 
 const Bases = () => {
   const { selectedTenantKey } = useTenant();
@@ -149,18 +150,6 @@ const Bases = () => {
     }
   };
 
-  const getBaseTypeLabel = (type: BaseType) => {
-    const labels: Record<BaseType, string> = {
-      Hospital: 'Hospital',
-      HealthCenter: 'Centro de Saúde',
-      Clinic: 'Clínica',
-      FireDepartment: 'Corpo de Bombeiros',
-      MunicipalGarage: 'Garagem Municipal',
-      Other: 'Outro',
-    };
-    return labels[type];
-  };
-
   const getBaseTypeColor = (type: BaseType) => {
     const colors: Record<BaseType, 'error' | 'primary' | 'success' | 'warning' | 'info' | 'default'> = {
       Hospital: 'error',
@@ -240,7 +229,7 @@ const Bases = () => {
                         <TableCell>{base.name}</TableCell>
                         <TableCell>
                           <Chip
-                            label={getBaseTypeLabel(base.type)}
+                            label={translateBaseType(base.type)}
                             color={getBaseTypeColor(base.type)}
                             size="small"
                           />

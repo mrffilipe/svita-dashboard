@@ -37,6 +37,7 @@ import NavigationMenu from '../../components/NavigationMenu';
 import { requestsService, platformTenantsService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { RequestDto, RegisterRequestRequest, TypeOccurrence } from '../../types';
+import { formatPhone, formatCpfCnpj } from '../../utils';
 
 const Requests = () => {
   const { selectedTenantKey } = useTenant();
@@ -467,7 +468,7 @@ const Requests = () => {
                   <Divider />
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Tipo de Ocorrência
                   </Typography>
@@ -543,7 +544,7 @@ const Requests = () => {
                         Telefone
                       </Typography>
                       <Typography variant="body1">
-                        {selectedRequest.patient.phone.value}
+                        {formatPhone(selectedRequest.patient.phone)}
                       </Typography>
                     </Grid>
 
@@ -552,7 +553,7 @@ const Requests = () => {
                         CPF
                       </Typography>
                       <Typography variant="body1">
-                        {selectedRequest.patient.cpf.value}
+                        {formatCpfCnpj(selectedRequest.patient.cpf)}
                       </Typography>
                     </Grid>
                   </>

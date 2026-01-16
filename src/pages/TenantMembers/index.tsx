@@ -31,6 +31,7 @@ import NavigationMenu from '../../components/NavigationMenu';
 import { tenantUsersService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { TenantUsersListDto, AddTenantUserRequest, TenantMemberRole } from '../../types';
+import { formatEmail, translateTenantMemberRole, translateTenantMemberStatus } from '../../utils';
 
 const TenantMembers = () => {
   const { selectedTenantKey } = useTenant();
@@ -205,17 +206,17 @@ const TenantMembers = () => {
                     {members.map((member) => (
                       <TableRow key={member.id}>
                         <TableCell>{member.name || '-'}</TableCell>
-                        <TableCell>{member.email}</TableCell>
+                        <TableCell>{formatEmail(member.email)}</TableCell>
                         <TableCell>
                           <Chip
-                            label={member.role}
+                            label={translateTenantMemberRole(member.role)}
                             color={getRoleColor(member.role)}
                             size="small"
                           />
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={member.status}
+                            label={translateTenantMemberStatus(member.status)}
                             color={getStatusColor(member.status)}
                             size="small"
                           />
