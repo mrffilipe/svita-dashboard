@@ -166,37 +166,21 @@ const Occurrences = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'AwaitingReview':
-        return 'warning';
-      case 'InProgress':
-        return 'info';
-      case 'Completed':
-        return 'success';
-      case 'Cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+  const getOccurrenceTypeLabel = (type: string | number) => {
+    // Se vier como número, mapear para string
+    const typeMap: { [key: number]: string } = {
+      0: 'Urgente',
+      1: 'Emergência',
+      2: 'Eletiva',
+      3: 'Social',
+      4: 'Outro',
+    };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'AwaitingReview':
-        return 'Aguardando Avaliação';
-      case 'InProgress':
-        return 'Em Progresso';
-      case 'Completed':
-        return 'Concluída';
-      case 'Cancelled':
-        return 'Cancelada';
-      default:
-        return status;
+    if (typeof type === 'number') {
+      return typeMap[type] || 'Desconhecido';
     }
-  };
 
-  const getOccurrenceTypeLabel = (type: string) => {
+    // Se vier como string, mapear também
     switch (type) {
       case 'Urgent':
         return 'Urgente';
@@ -213,27 +197,10 @@ const Occurrences = () => {
     }
   };
 
-  // const getPriorityLabel = (priority: PriorityOccurrence) => {
-  //   switch (priority) {
-  //     case 'VeryHigh':
-  //       return 'Muito Alta';
-  //     case 'High':
-  //       return 'Alta';
-  //     case 'Medium':
-  //       return 'Média';
-  //     case 'Low':
-  //       return 'Baixa';
-  //     case 'VeryLow':
-  //       return 'Muito Baixa';
-  //     default:
-  //       return priority;
-  //   }
-  // };
-
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: { xs: 2, md: 6 } }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: { xs: 2, md: 8 } }}>
       <NavigationMenu />
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 8 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 10 } }}>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           justifyContent="space-between"
@@ -423,11 +390,11 @@ const Occurrences = () => {
                                 <Chip
                                   label={getOccurrenceTypeLabel(request.aboutOccurrence.type)}
                                   size="small"
-                                  color={request.aboutOccurrence.type === 'Emergency' ? 'error' : 'default'}
+                                  color={(request.aboutOccurrence.type as any) === 1 || request.aboutOccurrence.type === 'Emergency' ? 'error' : 'default'}
                                 />
                                 <Chip
-                                  label={getStatusLabel(request.status)}
-                                  color={getStatusColor(request.status)}
+                                  label="Aguardando análise"
+                                  color="warning"
                                   size="small"
                                 />
                               </Box>

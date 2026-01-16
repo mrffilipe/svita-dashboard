@@ -108,43 +108,102 @@ const NavigationMenu = () => {
 
   const drawer = (
     <Box sx={{ width: 280 }} role="presentation">
-      <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', gap: 2 }}>
-        <img src="/logo.svg" alt="SVita Logo" style={{ width: 40, height: 40 }} />
+      <Box 
+        sx={{ 
+          p: 3, 
+          background: 'linear-gradient(135deg, #00BFA5 0%, #00897B 100%)',
+          color: 'white', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            borderRadius: '12px',
+            bgcolor: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <img src="/logo.png" alt="SVita Logo" style={{ width: 48, height: 48 }} />
+        </Box>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            SVita Dashboard
+          <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
+            SVita
           </Typography>
-          <Typography variant="caption">
-            Sistema de Gestão de Saúde
+          <Typography variant="caption" sx={{ opacity: 0.9, fontSize: '0.75rem' }}>
+            Sistema de Saúde
           </Typography>
         </Box>
       </Box>
-      <Divider />
-      <List>
+      <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+      <List sx={{ px: 1.5, py: 2 }}>
         {menuItems.filter(item => item.show).map((item) => (
-          <ListItem key={item.text} disablePadding>
+          <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
               onClick={() => {
                 navigate(item.path);
                 setDrawerOpen(false);
               }}
+              sx={{
+                borderRadius: 2,
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  bgcolor: 'rgba(0, 191, 165, 0.08)',
+                  transform: 'translateX(4px)',
+                },
+              }}
             >
-              <ListItemIcon sx={{ color: 'primary.main' }}>
+              <ListItemIcon sx={{ 
+                color: 'primary.main',
+                minWidth: 40,
+              }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.text} />
+              <ListItemText 
+                primary={item.text}
+                primaryTypographyProps={{
+                  fontSize: '0.9375rem',
+                  fontWeight: 500,
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-      <Divider />
-      <List>
+      <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+      <List sx={{ px: 1.5, py: 2 }}>
         <ListItem disablePadding>
-          <ListItemButton onClick={handleLogout}>
-            <ListItemIcon sx={{ color: 'error.main' }}>
+          <ListItemButton 
+            onClick={handleLogout}
+            sx={{
+              borderRadius: 2,
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                bgcolor: 'rgba(255, 82, 82, 0.08)',
+                transform: 'translateX(4px)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ 
+              color: 'error.main',
+              minWidth: 40,
+            }}>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary="Sair" />
+            <ListItemText 
+              primary="Sair"
+              primaryTypographyProps={{
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+              }}
+            />
           </ListItemButton>
         </ListItem>
       </List>
@@ -171,7 +230,7 @@ const NavigationMenu = () => {
             >
               <MenuIcon />
             </IconButton>
-            <img src="/logo.svg" alt="SVita Logo" style={{ width: 32, height: 32 }} />
+            <img src="/logo.png" alt="SVita Logo" style={{ width: 48, height: 48 }} />
           </Box>
           <TenantSelector />
         </Toolbar>
