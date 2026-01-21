@@ -13,6 +13,7 @@ import UserProfile from "./pages/UserProfile";
 import Drivers from "./pages/Drivers";
 import Requests from "./pages/Requests";
 import Occurrences from "./pages/Occurrences";
+import Comunicado from "./pages/Comunicado";
 
 const router = createBrowserRouter([
     { path: '/', index: true, Component: Home },
@@ -27,7 +28,8 @@ const router = createBrowserRouter([
     { path: '/profile', Component: UserProfile },
     { path: '/drivers', Component: Drivers },
     { path: '/requests', Component: Requests },
-    { path: '/occurrences', Component: Occurrences }
+    { path: '/occurrences', Component: Occurrences },
+    { path: '/comunicado', Component: Comunicado }
 ]);
 
 export default router

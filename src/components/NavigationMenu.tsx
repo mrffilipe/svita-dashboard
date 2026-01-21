@@ -26,6 +26,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import EmergencyIcon from '@mui/icons-material/Emergency';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import TenantSelector from './TenantSelector';
 import type { AuthSession } from '../types';
 
@@ -102,6 +103,12 @@ const NavigationMenu = () => {
       text: 'Ocorrências', 
       icon: <EmergencyIcon />, 
       path: '/occurrences', 
+      show: true 
+    },
+    { 
+      text: 'Comunicado', 
+      icon: <CampaignIcon />, 
+      path: '/comunicado', 
       show: true 
     },
   ];
