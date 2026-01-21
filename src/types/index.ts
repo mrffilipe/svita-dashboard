@@ -1,4 +1,5 @@
 export * from './auth';
+export * from './tenant';
 export * from './dispatch';
 export * from './driver';
 export * from './request';
@@ -6,4 +7,3 @@ export * from './user';
 export * from './vehicle';
 export * from './base';
 export * from './notification';
-export * from './dispatch';
