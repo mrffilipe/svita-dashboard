@@ -64,6 +64,7 @@ const Comunicado = () => {
     setLoading(true);
     try {
       await notificationService.sendNotification({
+        tenantKey: selectedTenantKey,
         title: formData.title,
         body: formData.body,
         type: formData.type,
