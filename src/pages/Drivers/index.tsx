@@ -18,26 +18,14 @@ import {
   Tabs,
   Tab,
   Divider,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
 } from '@mui/material';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
 import NavigationMenu from '../../components/NavigationMenu';
-import { driversService, vehiclesService } from '../../services';
+import { driversService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
-import type { DriverStatusDto, VehicleDto, StartShiftRequest } from '../../types';
+import type { DriverStatusDto } from '../../types';
 
 const Drivers = () => {
   const { selectedTenantKey } = useTenant();
@@ -51,12 +39,6 @@ const Drivers = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [openStartShiftDialog, setOpenStartShiftDialog] = useState(false);
-  const [openEndShiftDialog, setOpenEndShiftDialog] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<DriverStatusDto | null>(null);
-  const [vehicles, setVehicles] = useState<VehicleDto[]>([]);
-  const [selectedVehiclePlate, setSelectedVehiclePlate] = useState('');
-  const [loadingAction, setLoadingAction] = useState(false);
 
   const fetchAllDrivers = async () => {
     if (!selectedTenantKey) {
@@ -109,86 +91,6 @@ const Drivers = () => {
     setError(null);
   };
 
-  const fetchVehicles = async () => {
-    try {
-      const result = await vehiclesService.list(1, 100);
-      setVehicles(result.items);
-    } catch (err: any) {
-      setError('Erro ao carregar veículos');
-    }
-  };
-
-  const handleOpenStartShift = (driver: DriverStatusDto) => {
-    console.log('Opening start shift dialog for driver:', driver);
-    setSelectedDriver(driver);
-    setOpenStartShiftDialog(true);
-    fetchVehicles();
-  };
-
-  const handleOpenEndShift = (driver: DriverStatusDto) => {
-    setSelectedDriver(driver);
-    setOpenEndShiftDialog(true);
-  };
-
-  const handleStartShift = async () => {
-    if (!selectedDriver || !selectedVehiclePlate) return;
-
-    setLoadingAction(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const shiftData: StartShiftRequest = {
-        driverTenantUserId: selectedDriver.tenantUserId,
-        startingLocation: {
-          coordinate: {
-            latitude: 0,
-            longitude: 0,
-          },
-          timestamp: new Date().toISOString(),
-        },
-      };
-
-      await vehiclesService.startShift(selectedVehiclePlate, shiftData);
-      setSuccess('Turno iniciado com sucesso!');
-      setOpenStartShiftDialog(false);
-      setSelectedVehiclePlate('');
-      
-      if (tabValue === 0) {
-        fetchAllDrivers();
-      } else {
-        fetchAvailableDrivers();
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao iniciar turno');
-    } finally {
-      setLoadingAction(false);
-    }
-  };
-
-  const handleEndShift = async () => {
-    if (!selectedDriver?.activeShift) return;
-
-    setLoadingAction(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      await vehiclesService.endShift(selectedDriver.activeShift.driverShiftId);
-      setSuccess('Turno finalizado com sucesso!');
-      setOpenEndShiftDialog(false);
-      
-      if (tabValue === 0) {
-        fetchAllDrivers();
-      } else {
-        fetchAvailableDrivers();
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao finalizar turno');
-    } finally {
-      setLoadingAction(false);
-    }
-  };
 
   const renderDriverRow = (driver: DriverStatusDto) => {
     console.log('Rendering driver:', driver.name, 'hasActiveShift:', !!driver.activeShift, 'isOnline:', driver.isOnline);
@@ -230,28 +132,6 @@ const Drivers = () => {
             <Typography variant="body2" color="text.secondary">
               -
             </Typography>
-          )}
-        </TableCell>
-        <TableCell>
-          {driver.activeShift ? (
-            <IconButton
-              color="error"
-              size="small"
-              onClick={() => handleOpenEndShift(driver)}
-              title="Finalizar turno"
-            >
-              <StopIcon />
-            </IconButton>
-          ) : (
-            <IconButton
-              color="primary"
-              size="small"
-              onClick={() => handleOpenStartShift(driver)}
-              disabled={!driver.isOnline}
-              title="Iniciar turno"
-            >
-              <PlayArrowIcon />
-            </IconButton>
           )}
         </TableCell>
       </TableRow>
@@ -317,7 +197,6 @@ const Drivers = () => {
                           <TableCell>Status</TableCell>
                           <TableCell>Veículo/Turno</TableCell>
                           <TableCell>Localização</TableCell>
-                          <TableCell>Ações</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -358,7 +237,6 @@ const Drivers = () => {
                             <TableCell>Status</TableCell>
                             <TableCell>Veículo/Turno</TableCell>
                             <TableCell>Localização</TableCell>
-                            <TableCell>Ações</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -374,72 +252,6 @@ const Drivers = () => {
         </Paper>
       </Container>
 
-      <Dialog open={openStartShiftDialog} onClose={() => setOpenStartShiftDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Iniciar Turno</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              Motorista: <strong>{selectedDriver?.name}</strong>
-            </Typography>
-            <FormControl fullWidth>
-              <InputLabel>Selecione o Veículo</InputLabel>
-              <Select
-                value={selectedVehiclePlate}
-                label="Selecione o Veículo"
-                onChange={(e) => setSelectedVehiclePlate(e.target.value)}
-              >
-                {vehicles.map((vehicle) => (
-                  <MenuItem key={vehicle.id} value={vehicle.plate}>
-                    {vehicle.plate} - {vehicle.model} ({vehicle.year})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenStartShiftDialog(false)}>Cancelar</Button>
-          <Button
-            onClick={handleStartShift}
-            variant="contained"
-            disabled={!selectedVehiclePlate || loadingAction}
-            startIcon={loadingAction ? <CircularProgress size={20} /> : <PlayArrowIcon />}
-          >
-            Iniciar Turno
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={openEndShiftDialog} onClose={() => setOpenEndShiftDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Finalizar Turno</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Motorista: <strong>{selectedDriver?.name}</strong>
-            </Typography>
-            {selectedDriver?.activeShift && (
-              <Typography variant="body2">
-                Veículo: <strong>{selectedDriver.activeShift.vehicle.plate} - {selectedDriver.activeShift.vehicle.model}</strong>
-              </Typography>
-            )}
-            <Typography variant="body2" sx={{ mt: 2 }} color="text.secondary">
-              Tem certeza que deseja finalizar este turno?
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEndShiftDialog(false)}>Cancelar</Button>
-          <Button
-            onClick={handleEndShift}
-            variant="contained"
-            color="error"
-            disabled={loadingAction}
-            startIcon={loadingAction ? <CircularProgress size={20} /> : <StopIcon />}
-          >
-            Finalizar Turno
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };
