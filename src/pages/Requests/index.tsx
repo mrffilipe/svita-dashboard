@@ -33,11 +33,16 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
+import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
+import MapPicker from '../../components/MapPicker';
 import { requestsService, platformTenantsService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { RequestDto, RegisterRequestRequest, TypeOccurrence } from '../../types';
 import { formatPhone, formatCpfCnpj } from '../../utils';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const Requests = () => {
   const { selectedTenantKey } = useTenant();
@@ -52,6 +57,7 @@ const Requests = () => {
   const [selectedRequest, setSelectedRequest] = useState<RequestDto | null>(null);
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openMapPicker, setOpenMapPicker] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [formData, setFormData] = useState<Partial<RegisterRequestRequest>>({
@@ -671,13 +677,24 @@ const Requests = () => {
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Endereço"
-                  value={formData.pickup?.address || ''}
-                  onChange={(e) => handleFormChange('pickup.address', e.target.value)}
-                />
+                <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                  <AddressAutocomplete
+                    value={formData.pickup?.address || ''}
+                    onChange={(value) => handleFormChange('pickup.address', value)}
+                    onPlaceSelect={(place) => {
+                      const lat = place.geometry?.location?.lat();
+                      const lng = place.geometry?.location?.lng();
+                      if (lat && lng) {
+                        handleFormChange('pickup.address', place.formatted_address || formData.pickup?.address || '');
+                        handleFormChange('pickup.latitude', lat.toString());
+                        handleFormChange('pickup.longitude', lng.toString());
+                        setOpenMapPicker(true);
+                      }
+                    }}
+                    label="Endereço"
+                    required
+                  />
+                </APIProvider>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
@@ -714,7 +731,7 @@ const Requests = () => {
               <Grid size={{ xs: 12 }}>
                 <Divider />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 2 }}>
-                  Informações do Paciente (Opcional)
+                  Informações do Paciente
                 </Typography>
               </Grid>
 
@@ -759,6 +776,20 @@ const Requests = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+        <MapPicker
+          open={openMapPicker}
+          onClose={() => setOpenMapPicker(false)}
+          onConfirm={(lat, lng) => {
+            handleFormChange('pickup.latitude', lat.toString());
+            handleFormChange('pickup.longitude', lng.toString());
+          }}
+          initialLat={formData.pickup?.coordinate.latitude || 0}
+          initialLng={formData.pickup?.coordinate.longitude || 0}
+          address={formData.pickup?.address || ''}
+        />
+      </APIProvider>
     </Box>
   );
 };

@@ -27,11 +27,16 @@ import {
   Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
+import MapPicker from '../../components/MapPicker';
 import { basesService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
 import type { BaseListDto, RegisterBaseRequest, BaseType } from '../../types';
 import { translateBaseType } from '../../utils';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const Bases = () => {
   const { selectedTenantKey } = useTenant();
@@ -42,6 +47,7 @@ const Bases = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openMapPicker, setOpenMapPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [formData, setFormData] = useState<RegisterBaseRequest>({
@@ -312,13 +318,39 @@ const Bases = () => {
                 value={formData.location.coordinate.longitude}
                 onChange={handleChange}
               />
-              <TextField
-                fullWidth
-                label="Endereço"
-                name="location.address"
-                value={formData.location.address}
-                onChange={handleChange}
-              />
+              <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                <AddressAutocomplete
+                  value={formData.location.address || ''}
+                  onChange={(value) => {
+                    setFormData({
+                      ...formData,
+                      location: {
+                        ...formData.location,
+                        address: value,
+                      },
+                    });
+                  }}
+                  onPlaceSelect={(place) => {
+                    const lat = place.geometry?.location?.lat();
+                    const lng = place.geometry?.location?.lng();
+                    if (lat && lng) {
+                      setFormData({
+                        ...formData,
+                        location: {
+                          ...formData.location,
+                          address: place.formatted_address || formData.location.address || '',
+                          coordinate: {
+                            latitude: lat,
+                            longitude: lng,
+                          },
+                        },
+                      });
+                      setOpenMapPicker(true);
+                    }
+                  }}
+                  label="Endereço"
+                />
+              </APIProvider>
               <TextField
                 fullWidth
                 label="Complemento"
@@ -336,6 +368,28 @@ const Bases = () => {
           </DialogActions>
         </form>
       </Dialog>
+
+      <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+        <MapPicker
+          open={openMapPicker}
+          onClose={() => setOpenMapPicker(false)}
+          onConfirm={(lat, lng) => {
+            setFormData({
+              ...formData,
+              location: {
+                ...formData.location,
+                coordinate: {
+                  latitude: lat,
+                  longitude: lng,
+                },
+              },
+            });
+          }}
+          initialLat={formData.location.coordinate.latitude}
+          initialLng={formData.location.coordinate.longitude}
+          address={formData.location.address}
+        />
+      </APIProvider>
     </Box>
   );
 };
