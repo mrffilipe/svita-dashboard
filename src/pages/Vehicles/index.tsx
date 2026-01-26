@@ -27,10 +27,12 @@ import {
   Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import NavigationMenu from '../../components/NavigationMenu';
 import { vehiclesService, basesService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
-import type { VehicleDto, RegisterVehicleRequest, VehicleType, BaseListDto } from '../../types';
+import type { VehicleDto, RegisterVehicleRequest, VehicleType, BaseListDto, UpdateVehicleRequest } from '../../types';
 import { translateVehicleType } from '../../utils';
 
 const Vehicles = () => {
@@ -43,8 +45,10 @@ const Vehicles = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleDto | null>(null);
   const [formData, setFormData] = useState<RegisterVehicleRequest>({
     plate: '',
     model: '',
@@ -142,6 +146,74 @@ const Vehicles = () => {
     }
   };
 
+  const handleEdit = (vehicle: VehicleDto) => {
+    setEditingVehicle(vehicle);
+    setFormData({
+      plate: vehicle.plate,
+      model: vehicle.model,
+      year: vehicle.year,
+      type: vehicle.type,
+      baseId: vehicle.base.id,
+    });
+    setOpenEditDialog(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!selectedTenantKey || !editingVehicle) {
+      setError('Dados não especificados');
+      return;
+    }
+
+    try {
+      const updateData: UpdateVehicleRequest = {
+        model: formData.model,
+        type: formData.type,
+        year: formData.year,
+      };
+
+      await vehiclesService.update(editingVehicle.plate, updateData);
+      setSuccess('Veículo atualizado com sucesso!');
+      setOpenEditDialog(false);
+      setEditingVehicle(null);
+      setFormData({
+        plate: '',
+        model: '',
+        year: new Date().getFullYear(),
+        type: 'Ambulance',
+        baseId: '',
+      });
+      fetchVehicles();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao atualizar veículo');
+    }
+  };
+
+  const handleDelete = async (vehicle: VehicleDto) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o veículo "${vehicle.plate}"?`)) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+
+    if (!selectedTenantKey) {
+      setError('Tenant não especificado');
+      return;
+    }
+
+    try {
+      await vehiclesService.delete(vehicle.plate);
+      setSuccess('Veículo excluído com sucesso!');
+      fetchVehicles();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao excluir veículo');
+    }
+  };
+
 
   const getVehicleTypeColor = (type: VehicleType) => {
     const colors: Record<VehicleType, 'error' | 'default'> = {
@@ -209,6 +281,7 @@ const Vehicles = () => {
                       <TableCell>Tipo</TableCell>
                       <TableCell>Base</TableCell>
                       <TableCell>Criado em</TableCell>
+                      <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -227,6 +300,27 @@ const Vehicles = () => {
                         <TableCell>{vehicle.base.name}</TableCell>
                         <TableCell>
                           {new Date(vehicle.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              size="small"
+                              startIcon={<EditIcon />}
+                              onClick={() => handleEdit(vehicle)}
+                              variant="outlined"
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="small"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleDelete(vehicle)}
+                              variant="outlined"
+                              color="error"
+                            >
+                              Excluir
+                            </Button>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -315,6 +409,74 @@ const Vehicles = () => {
             <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
             <Button type="submit" variant="contained">
               Criar
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <form onSubmit={handleUpdate}>
+          <DialogTitle>Editar Veículo</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <TextField
+                fullWidth
+                label="Placa"
+                name="plate"
+                value={formData.plate}
+                disabled
+                inputProps={{ style: { textTransform: 'uppercase' } }}
+                helperText="A placa não pode ser alterada"
+              />
+              <TextField
+                required
+                fullWidth
+                label="Modelo"
+                name="model"
+                value={formData.model}
+                onChange={handleChange}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Ano"
+                name="year"
+                type="number"
+                value={formData.year}
+                onChange={handleChange}
+                inputProps={{ min: 1900, max: 2100 }}
+              />
+              <FormControl fullWidth required>
+                <InputLabel>Tipo</InputLabel>
+                <Select
+                  value={formData.type}
+                  label="Tipo"
+                  onChange={(e) => handleTypeChange(e.target.value as VehicleType)}
+                >
+                  <MenuItem value="Ambulance">Ambulância</MenuItem>
+                  <MenuItem value="Other">Outro</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel>Base</InputLabel>
+                <Select
+                  value={formData.baseId}
+                  label="Base"
+                  onChange={(e) => handleBaseChange(e.target.value)}
+                >
+                  {bases.map((base) => (
+                    <MenuItem key={base.id} value={base.id}>
+                      {base.name} ({base.code})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditDialog(false)}>Cancelar</Button>
+            <Button type="submit" variant="contained">
+              Atualizar
             </Button>
           </DialogActions>
         </form>

@@ -4,6 +4,7 @@ import type {
   VehicleDtoPagedResult,
   VehicleDto,
   StartShiftRequest,
+  UpdateVehicleRequest,
 } from '../types';
 
 export const vehiclesService = {
@@ -23,6 +24,15 @@ export const vehiclesService = {
       params: { plate },
     });
     return response.data;
+  },
+
+  update: async (plate: string, data: UpdateVehicleRequest): Promise<VehicleDto> => {
+    const response = await api.put<VehicleDto>(`/api/tenants/{tenantKey}/Vehicles/${plate}`, data);
+    return response.data;
+  },
+
+  delete: async (plate: string): Promise<void> => {
+    await api.delete(`/api/tenants/{tenantKey}/Vehicles/${plate}`);
   },
 
   startShift: async (plate: string, data: StartShiftRequest): Promise<void> => {

@@ -10,21 +10,35 @@ import {
   CircularProgress,
   Chip,
   Divider,
+  Button,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import BadgeIcon from '@mui/icons-material/Badge';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import EditIcon from '@mui/icons-material/Edit';
 import NavigationMenu from '../../components/NavigationMenu';
 import { userService } from '../../services';
-import type { UserDto } from '../../types';
+import type { UserDto, UpdateUserRequest } from '../../types';
 import { formatCpfCnpj, formatEmail, formatPhone } from '../../utils';
 
 const UserProfile = () => {
   const [user, setUser] = useState<UserDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [formData, setFormData] = useState<UpdateUserRequest>({
+    firstName: '',
+    lastName: '',
+    phone: '',
+  });
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -54,17 +68,72 @@ const UserProfile = () => {
     fetchUserProfile();
   }, []);
 
+  const handleEdit = () => {
+    if (!user) return;
+    
+    setFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+    });
+    setOpenEditDialog(true);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!user) {
+      setError('Usuário não encontrado');
+      return;
+    }
+
+    try {
+      const updatedUser = await userService.update(user.id, formData);
+      setUser(updatedUser);
+      setSuccess('Perfil atualizado com sucesso!');
+      setOpenEditDialog(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao atualizar perfil');
+    }
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 12, pb: 4, px: 2 }}>
       <NavigationMenu />
       <Container maxWidth="md">
         <Paper elevation={0} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <PersonIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-              Meu Perfil
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PersonIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+              <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                Meu Perfil
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              disabled={!user}
+            >
+              Editar Perfil
+            </Button>
           </Box>
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
+              {success}
+            </Alert>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
@@ -175,6 +244,55 @@ const UserProfile = () => {
           )}
         </Paper>
       </Container>
+
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <form onSubmit={handleUpdate}>
+          <DialogTitle>Editar Perfil</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <TextField
+                required
+                fullWidth
+                label="Nome"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                InputProps={{
+                  startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Sobrenome"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                InputProps={{
+                  startAdornment: <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Telefone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                InputProps={{
+                  startAdornment: <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                }}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditDialog(false)}>Cancelar</Button>
+            <Button type="submit" variant="contained">
+              Atualizar
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </Box>
   );
 };

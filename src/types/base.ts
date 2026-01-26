@@ -50,3 +50,9 @@ export interface BaseListDtoPagedResult {
   totalItems: number;
   totalPages: number;
 }
+
+export interface UpdateBaseRequest {
+  name: string;
+  type: BaseType;
+  location: Location;
+}

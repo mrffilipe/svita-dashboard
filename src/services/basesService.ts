@@ -2,6 +2,8 @@ import { api } from '../config';
 import type {
   RegisterBaseRequest,
   BaseListDtoPagedResult,
+  UpdateBaseRequest,
+  BaseListDto,
 } from '../types';
 
 export const basesService = {
@@ -14,5 +16,14 @@ export const basesService = {
       params: { Page: page, PageSize: pageSize },
     });
     return response.data;
+  },
+
+  update: async (id: string, data: UpdateBaseRequest): Promise<BaseListDto> => {
+    const response = await api.put<BaseListDto>(`/api/tenants/{tenantKey}/Bases/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/tenants/{tenantKey}/Bases/${id}`);
   },
 };

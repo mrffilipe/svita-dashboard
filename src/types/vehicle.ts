@@ -47,3 +47,9 @@ export interface StartShiftRequest {
     timestamp: string;
   };
 }
+
+export interface UpdateVehicleRequest {
+  model: string;
+  type: VehicleType;
+  year: number;
+}

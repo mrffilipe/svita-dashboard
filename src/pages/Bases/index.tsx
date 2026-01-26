@@ -27,13 +27,15 @@ import {
   Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import MapPicker from '../../components/MapPicker';
 import { basesService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
-import type { BaseListDto, RegisterBaseRequest, BaseType } from '../../types';
+import type { BaseListDto, RegisterBaseRequest, BaseType, UpdateBaseRequest } from '../../types';
 import { translateBaseType } from '../../utils';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -47,9 +49,11 @@ const Bases = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openMapPicker, setOpenMapPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingBase, setEditingBase] = useState<BaseListDto | null>(null);
   const [formData, setFormData] = useState<RegisterBaseRequest>({
     name: '',
     type: 'Hospital',
@@ -156,6 +160,77 @@ const Bases = () => {
     }
   };
 
+  const handleEdit = (base: BaseListDto) => {
+    setEditingBase(base);
+    setFormData({
+      name: base.name,
+      type: base.type,
+      location: base.location,
+    });
+    setOpenEditDialog(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!selectedTenantKey || !editingBase) {
+      setError('Dados não especificados');
+      return;
+    }
+
+    try {
+      const updateData: UpdateBaseRequest = {
+        name: formData.name,
+        type: formData.type,
+        location: formData.location,
+      };
+
+      await basesService.update(editingBase.id, updateData);
+      setSuccess('Base atualizada com sucesso!');
+      setOpenEditDialog(false);
+      setEditingBase(null);
+      setFormData({
+        name: '',
+        type: 'Hospital',
+        location: {
+          coordinate: {
+            latitude: 0,
+            longitude: 0,
+          },
+          address: '',
+          complement: '',
+        },
+      });
+      fetchBases();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao atualizar base');
+    }
+  };
+
+  const handleDelete = async (base: BaseListDto) => {
+    if (!window.confirm(`Tem certeza que deseja excluir a base "${base.name}"?`)) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+
+    if (!selectedTenantKey) {
+      setError('Tenant não especificado');
+      return;
+    }
+
+    try {
+      await basesService.delete(base.id);
+      setSuccess('Base excluída com sucesso!');
+      fetchBases();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao excluir base');
+    }
+  };
+
   const getBaseTypeColor = (type: BaseType) => {
     const colors: Record<BaseType, 'error' | 'primary' | 'success' | 'warning' | 'info' | 'default'> = {
       Hospital: 'error',
@@ -226,6 +301,7 @@ const Bases = () => {
                       <TableCell>Endereço</TableCell>
                       <TableCell>Veículos</TableCell>
                       <TableCell>Criado em</TableCell>
+                      <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -244,6 +320,27 @@ const Bases = () => {
                         <TableCell>{base.vehicles?.length || 0}</TableCell>
                         <TableCell>
                           {new Date(base.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              size="small"
+                              startIcon={<EditIcon />}
+                              onClick={() => handleEdit(base)}
+                              variant="outlined"
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="small"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => handleDelete(base)}
+                              variant="outlined"
+                              color="error"
+                            >
+                              Excluir
+                            </Button>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -364,6 +461,105 @@ const Bases = () => {
             <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
             <Button type="submit" variant="contained">
               Criar
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <form onSubmit={handleUpdate}>
+          <DialogTitle>Editar Base</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <TextField
+                required
+                fullWidth
+                label="Nome"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+              />
+              <FormControl fullWidth required>
+                <InputLabel>Tipo</InputLabel>
+                <Select
+                  value={formData.type}
+                  label="Tipo"
+                  onChange={(e) => handleTypeChange(e.target.value as BaseType)}
+                >
+                  <MenuItem value="Hospital">Hospital</MenuItem>
+                  <MenuItem value="HealthCenter">Centro de Saúde</MenuItem>
+                  <MenuItem value="Clinic">Clínica</MenuItem>
+                  <MenuItem value="FireDepartment">Corpo de Bombeiros</MenuItem>
+                  <MenuItem value="MunicipalGarage">Garagem Municipal</MenuItem>
+                  <MenuItem value="Other">Outro</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                required
+                fullWidth
+                label="Latitude"
+                name="location.coordinate.latitude"
+                type="number"
+                inputProps={{ step: 'any' }}
+                value={formData.location.coordinate.latitude}
+                onChange={handleChange}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Longitude"
+                name="location.coordinate.longitude"
+                type="number"
+                inputProps={{ step: 'any' }}
+                value={formData.location.coordinate.longitude}
+                onChange={handleChange}
+              />
+              <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                <AddressAutocomplete
+                  value={formData.location.address || ''}
+                  onChange={(value) => {
+                    setFormData({
+                      ...formData,
+                      location: {
+                        ...formData.location,
+                        address: value,
+                      },
+                    });
+                  }}
+                  onPlaceSelect={(place) => {
+                    const lat = place.geometry?.location?.lat();
+                    const lng = place.geometry?.location?.lng();
+                    if (lat && lng) {
+                      setFormData({
+                        ...formData,
+                        location: {
+                          ...formData.location,
+                          address: place.formatted_address || formData.location.address || '',
+                          coordinate: {
+                            latitude: lat,
+                            longitude: lng,
+                          },
+                        },
+                      });
+                      setOpenMapPicker(true);
+                    }
+                  }}
+                  label="Endereço"
+                />
+              </APIProvider>
+              <TextField
+                fullWidth
+                label="Complemento"
+                name="location.complement"
+                value={formData.location.complement}
+                onChange={handleChange}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditDialog(false)}>Cancelar</Button>
+            <Button type="submit" variant="contained">
+              Atualizar
             </Button>
           </DialogActions>
         </form>
