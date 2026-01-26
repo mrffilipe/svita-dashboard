@@ -16,4 +16,11 @@ export const userService = {
     const response = await api.put<UserDto>(`/api/Users/${id}`, data);
     return response.data;
   },
+
+  search: async (term: string): Promise<UserDto[]> => {
+    const response = await api.get<UserDto[]>(`/api/Users/search`, {
+      params: { Term: term },
+    });
+    return response.data;
+  },
 };

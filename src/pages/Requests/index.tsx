@@ -28,6 +28,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Autocomplete,
+  TextField as MuiTextField,
 } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -39,8 +41,10 @@ import NavigationMenu from '../../components/NavigationMenu';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import MapPicker from '../../components/MapPicker';
 import { requestsService, platformTenantsService } from '../../services';
+import { userService } from '../../services/userService';
 import { useTenant } from '../../contexts/TenantContext';
 import type { RequestDto, RegisterRequestRequest, TypeOccurrence, UpdateRequestRequest } from '../../types';
+import type { UserDto } from '../../types/user';
 import { formatPhone, formatCpfCnpj } from '../../utils';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -64,6 +68,11 @@ const Requests = () => {
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
   const [editingRequest, setEditingRequest] = useState<RequestDto | null>(null);
+  const [searchUserTerm, setSearchUserTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<UserDto[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+  const [showUserRequests, setShowUserRequests] = useState(false);
   const [formData, setFormData] = useState<Partial<RegisterRequestRequest>>({
     pickup: {
       coordinate: { latitude: 0, longitude: 0 },
@@ -353,6 +362,67 @@ const Requests = () => {
     });
   };
 
+  const handleUserSearch = async (term: string) => {
+    setSearchUserTerm(term);
+    
+    if (term.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchingUsers(true);
+    try {
+      const results = await userService.search(term);
+      setSearchResults(results);
+    } catch (err: any) {
+      console.error('Erro ao buscar usuários:', err);
+      setSearchResults([]);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  const handleSelectUser = (user: UserDto) => {
+    setSelectedUser(user);
+    setShowUserRequests(true);
+    setSearchResults([]);
+    setSearchUserTerm('');
+  };
+
+  const handleBackToMyRequests = () => {
+    setShowUserRequests(false);
+    setSelectedUser(null);
+    setPage(0);
+    fetchRequests();
+  };
+
+  const fetchUserRequests = async () => {
+    if (!selectedTenantKey || !selectedUser) {
+      setError('Selecione um tenant e usuário primeiro');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await requestsService.listByUser(selectedUser.id, page + 1, pageSize);
+      setRequests(result.items);
+      setTotalItems(result.totalItems);
+      setError(null);
+    } catch (err: any) {
+      setError('Erro ao carregar solicitações do usuário');
+      console.error('Error fetching user requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showUserRequests && selectedUser) {
+      fetchUserRequests();
+    }
+  }, [page, pageSize, showUserRequests, selectedUser, selectedTenantKey]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'AwaitingReview':
@@ -415,17 +485,72 @@ const Requests = () => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <AssignmentIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
               <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                Minhas Solicitações
+                {showUserRequests ? `Solicitações de: ${selectedUser?.firstName} ${selectedUser?.lastName}` : 'Minhas Solicitações'}
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateDialog}
-              disabled={!selectedTenantKey}
-            >
-              Nova Solicitação
-            </Button>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              {!showUserRequests && (
+                <Autocomplete
+                  freeSolo
+                  options={searchResults}
+                  getOptionLabel={(option) => {
+                    if (typeof option === 'string') return option;
+                    return `${option.firstName} ${option.lastName} (${option.email})`;
+                  }}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {option.firstName} {option.lastName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.email} • {formatCpfCnpj(option.cpfCnpj)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <MuiTextField
+                      {...params}
+                      label="Buscar usuário (nome, CPF ou email)"
+                      placeholder="Digite 3+ caracteres para buscar..."
+                      onChange={(e) => handleUserSearch(e.target.value)}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {searchingUsers && <CircularProgress size={20} />}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                      sx={{ minWidth: { xs: '100%', sm: 300 } }}
+                    />
+                  )}
+                  onInputChange={(_, value) => handleUserSearch(value)}
+                  onChange={(_, value) => {
+                    if (value && typeof value !== 'string') {
+                      handleSelectUser(value);
+                    }
+                  }}
+                  noOptionsText={
+                    searchUserTerm.length < 3 
+                      ? 'Digite pelo menos 3 caracteres' 
+                      : 'Nenhum usuário encontrado'
+                  }
+                  loading={searchingUsers}
+                  loadingText="Buscando usuários..."
+                />
+              )}
+              <Button
+                variant="contained"
+                startIcon={showUserRequests ? <CloseIcon /> : <AddIcon />}
+                onClick={showUserRequests ? handleBackToMyRequests : handleOpenCreateDialog}
+                disabled={!selectedTenantKey}
+              >
+                {showUserRequests ? 'Voltar' : 'Nova Solicitação'}
+              </Button>
+            </Stack>
           </Stack>
 
           {error && (
@@ -450,7 +575,10 @@ const Requests = () => {
             </Box>
           ) : requests.length === 0 ? (
             <Alert severity="info">
-              Você ainda não possui solicitações.
+              {showUserRequests 
+                ? `${selectedUser?.firstName} ${selectedUser?.lastName} ainda não possui solicitações.`
+                : 'Você ainda não possui solicitações.'
+              }
             </Alert>
           ) : (
             <>
