@@ -33,13 +33,14 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
 import MapPicker from '../../components/MapPicker';
 import { requestsService, platformTenantsService } from '../../services';
 import { useTenant } from '../../contexts/TenantContext';
-import type { RequestDto, RegisterRequestRequest, TypeOccurrence } from '../../types';
+import type { RequestDto, RegisterRequestRequest, TypeOccurrence, UpdateRequestRequest } from '../../types';
 import { formatPhone, formatCpfCnpj } from '../../utils';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -57,9 +58,12 @@ const Requests = () => {
   const [selectedRequest, setSelectedRequest] = useState<RequestDto | null>(null);
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openMapPicker, setOpenMapPicker] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<RequestDto | null>(null);
   const [formData, setFormData] = useState<Partial<RegisterRequestRequest>>({
     pickup: {
       coordinate: { latitude: 0, longitude: 0 },
@@ -264,6 +268,91 @@ const Requests = () => {
     }
   };
 
+  const handleEdit = async (request: RequestDto) => {
+    if (request.status !== 'AwaitingReview') {
+      setError('Só é possível editar solicitações com status "Aguardando Revisão"');
+      return;
+    }
+
+    setLoadingDetail(true);
+    try {
+      const requestDetails = await requestsService.getById(request.id);
+      setEditingRequest(requestDetails);
+      setFormData({
+        pickup: {
+          coordinate: requestDetails.pickup.coordinate,
+          address: requestDetails.pickup.address,
+          complement: requestDetails.pickup.complement || '',
+        },
+        aboutOccurrence: requestDetails.aboutOccurrence,
+        patient: requestDetails.patient,
+        scheduling: requestDetails.scheduling,
+      });
+      setOpenEditDialog(true);
+    } catch (err: any) {
+      setError('Erro ao carregar dados da solicitação para edição');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingRequest) {
+      setError('Solicitação não encontrada');
+      return;
+    }
+
+    if (!formData.pickup?.address || !formData.aboutOccurrence?.type) {
+      setError('Preencha os campos obrigatórios');
+      return;
+    }
+
+    setLoadingUpdate(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const updateData: UpdateRequestRequest = {
+        pickup: formData.pickup!,
+        aboutOccurrence: formData.aboutOccurrence!,
+        patient: formData.patient?.name ? formData.patient : undefined,
+        scheduling: formData.scheduling,
+      };
+
+      await requestsService.update(editingRequest.id, updateData);
+      setSuccess('Solicitação atualizada com sucesso!');
+      setOpenEditDialog(false);
+      setEditingRequest(null);
+      fetchRequests();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao atualizar solicitação');
+    } finally {
+      setLoadingUpdate(false);
+    }
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    setEditingRequest(null);
+    setFormData({
+      pickup: {
+        coordinate: { latitude: 0, longitude: 0 },
+        address: '',
+        complement: '',
+      },
+      aboutOccurrence: {
+        type: 'Urgent' as TypeOccurrence,
+        description: '',
+      },
+      patient: {
+        name: '',
+        phone: { value: '' },
+        cpf: { value: '' },
+        typeOfApplicant: 'Patient',
+      },
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'AwaitingReview':
@@ -411,6 +500,16 @@ const Requests = () => {
                           >
                             <VisibilityIcon />
                           </IconButton>
+                          {request.status === 'AwaitingReview' && (
+                            <IconButton
+                              color="secondary"
+                              size="small"
+                              onClick={() => handleEdit(request)}
+                              title="Editar solicitação"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -773,6 +872,165 @@ const Requests = () => {
             startIcon={loadingCreate ? <CircularProgress size={20} /> : <AddIcon />}
           >
             Criar Solicitação
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog 
+        open={openEditDialog} 
+        onClose={handleCloseEditDialog} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Editar Solicitação</Typography>
+            <IconButton onClick={handleCloseEditDialog} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                  Informações da Ocorrência
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Tipo de Ocorrência</InputLabel>
+                  <Select
+                    value={formData.aboutOccurrence?.type || 'Urgent'}
+                    label="Tipo de Ocorrência"
+                    onChange={(e) => handleFormChange('aboutOccurrence.type', e.target.value)}
+                  >
+                    <MenuItem value="Urgent">Urgente</MenuItem>
+                    <MenuItem value="Emergency">Emergência</MenuItem>
+                    <MenuItem value="Elective">Eletiva</MenuItem>
+                    <MenuItem value="Social">Social</MenuItem>
+                    <MenuItem value="Other">Outro</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Descrição da Ocorrência"
+                  multiline
+                  rows={3}
+                  value={formData.aboutOccurrence?.description || ''}
+                  onChange={(e) => handleFormChange('aboutOccurrence.description', e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 2 }}>
+                  Local de Coleta
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                  <AddressAutocomplete
+                    value={formData.pickup?.address || ''}
+                    onChange={(value) => handleFormChange('pickup.address', value)}
+                    onPlaceSelect={(place) => {
+                      const lat = place.geometry?.location?.lat();
+                      const lng = place.geometry?.location?.lng();
+                      if (lat && lng) {
+                        handleFormChange('pickup.address', place.formatted_address || formData.pickup?.address || '');
+                        handleFormChange('pickup.latitude', lat.toString());
+                        handleFormChange('pickup.longitude', lng.toString());
+                        setOpenMapPicker(true);
+                      }
+                    }}
+                    label="Endereço"
+                    required
+                  />
+                </APIProvider>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Complemento"
+                  value={formData.pickup?.complement || ''}
+                  onChange={(e) => handleFormChange('pickup.complement', e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Latitude"
+                  type="number"
+                  value={formData.pickup?.coordinate.latitude || 0}
+                  onChange={(e) => handleFormChange('pickup.latitude', e.target.value)}
+                  inputProps={{ step: 'any' }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Longitude"
+                  type="number"
+                  value={formData.pickup?.coordinate.longitude || 0}
+                  onChange={(e) => handleFormChange('pickup.longitude', e.target.value)}
+                  inputProps={{ step: 'any' }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mt: 2, mb: 2 }}>
+                  Informações do Paciente
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Nome do Paciente"
+                  value={formData.patient?.name || ''}
+                  onChange={(e) => handleFormChange('patient.name', e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Telefone"
+                  value={formData.patient?.phone?.value || ''}
+                  onChange={(e) => handleFormChange('patient.phone', e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="CPF"
+                  value={formData.patient?.cpf?.value || ''}
+                  onChange={(e) => handleFormChange('patient.cpf', e.target.value)}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditDialog}>Cancelar</Button>
+          <Button
+            onClick={handleUpdate}
+            variant="contained"
+            disabled={loadingUpdate || !formData.pickup?.address || !formData.aboutOccurrence?.type}
+            startIcon={loadingUpdate ? <CircularProgress size={20} /> : <EditIcon />}
+          >
+            Atualizar Solicitação
           </Button>
         </DialogActions>
       </Dialog>

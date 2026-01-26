@@ -1,5 +1,5 @@
 import { api } from '../config';
-import type { RequestDto, RequestDtoPagedResult, RegisterRequestRequest } from '../types';
+import type { RequestDto, RequestDtoPagedResult, RegisterRequestRequest, UpdateRequestRequest } from '../types';
 
 export const requestsService = {
   create: async (data: RegisterRequestRequest): Promise<void> => {
@@ -15,6 +15,11 @@ export const requestsService = {
 
   getById: async (requestId: string): Promise<RequestDto> => {
     const response = await api.get<RequestDto>(`/api/tenants/{tenantKey}/Requests/${requestId}`);
+    return response.data;
+  },
+
+  update: async (requestId: string, data: UpdateRequestRequest): Promise<RequestDto> => {
+    const response = await api.put<RequestDto>(`/api/tenants/{tenantKey}/Requests/${requestId}`, data);
     return response.data;
   },
 };

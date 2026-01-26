@@ -82,3 +82,17 @@ export interface RegisterRequestRequest {
   aboutOccurrence: AboutOccurrence;
   scheduling?: Scheduling;
 }
+
+export interface UpdateRequestRequest {
+  patient?: Patient;
+  pickup: {
+    coordinate: {
+      latitude: number;
+      longitude: number;
+    };
+    address: string;
+    complement?: string;
+  };
+  aboutOccurrence: AboutOccurrence;
+  scheduling?: Scheduling;
+}
