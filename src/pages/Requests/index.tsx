@@ -73,6 +73,9 @@ const Requests = () => {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
   const [showUserRequests, setShowUserRequests] = useState(false);
+  const [patientSearchResults, setPatientSearchResults] = useState<UserDto[]>([]);
+  const [searchingPatients, setSearchingPatients] = useState(false);
+  const [patientSearchTerm, setPatientSearchTerm] = useState('');
   const [formData, setFormData] = useState<Partial<RegisterRequestRequest>>({
     pickup: {
       coordinate: { latitude: 0, longitude: 0 },
@@ -422,6 +425,40 @@ const Requests = () => {
       fetchUserRequests();
     }
   }, [page, pageSize, showUserRequests, selectedUser, selectedTenantKey]);
+
+  const handlePatientSearch = async (term: string) => {
+    setPatientSearchTerm(term);
+    
+    if (term.length < 3) {
+      setPatientSearchResults([]);
+      return;
+    }
+
+    setSearchingPatients(true);
+    try {
+      const results = await userService.search(term);
+      setPatientSearchResults(results);
+    } catch (err: any) {
+      console.error('Erro ao buscar pacientes:', err);
+      setPatientSearchResults([]);
+    } finally {
+      setSearchingPatients(false);
+    }
+  };
+
+  const handleSelectPatient = (user: UserDto) => {
+    setFormData({
+      ...formData,
+      patient: {
+        name: user.firstName + ' ' + user.lastName,
+        phone: { value: user.phone },
+        cpf: { value: user.cpfCnpj },
+        typeOfApplicant: 'Patient',
+      },
+    });
+    setPatientSearchResults([]);
+    setPatientSearchTerm('');
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -963,11 +1000,59 @@ const Requests = () => {
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Nome do Paciente"
+                <Autocomplete
+                  freeSolo
+                  options={patientSearchResults}
+                  getOptionLabel={(option) => {
+                    if (typeof option === 'string') return option;
+                    return `${option.firstName} ${option.lastName} (${option.email})`;
+                  }}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {option.firstName} {option.lastName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.email} • {formatCpfCnpj(option.cpfCnpj)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <MuiTextField
+                      {...params}
+                      label="Nome do Paciente"
+                      placeholder="Digite 3+ caracteres para buscar..."
+                      onChange={(e) => handlePatientSearch(e.target.value)}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {searchingPatients && <CircularProgress size={20} />}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  onInputChange={(_, value) => {
+                    handlePatientSearch(value);
+                    handleFormChange('patient.name', value);
+                  }}
+                  onChange={(_, value) => {
+                    if (value && typeof value !== 'string') {
+                      handleSelectPatient(value);
+                    }
+                  }}
+                  noOptionsText={
+                    patientSearchTerm.length < 3 
+                      ? 'Digite pelo menos 3 caracteres' 
+                      : 'Nenhum paciente encontrado'
+                  }
+                  loading={searchingPatients}
+                  loadingText="Buscando pacientes..."
                   value={formData.patient?.name || ''}
-                  onChange={(e) => handleFormChange('patient.name', e.target.value)}
                 />
               </Grid>
 
@@ -981,11 +1066,59 @@ const Requests = () => {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="CPF"
+                <Autocomplete
+                  freeSolo
+                  options={patientSearchResults}
+                  getOptionLabel={(option) => {
+                    if (typeof option === 'string') return option;
+                    return formatCpfCnpj(option.cpfCnpj);
+                  }}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {formatCpfCnpj(option.cpfCnpj)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.firstName} {option.lastName} • {option.email}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <MuiTextField
+                      {...params}
+                      label="CPF"
+                      placeholder="Digite 3+ caracteres para buscar..."
+                      onChange={(e) => handlePatientSearch(e.target.value)}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {searchingPatients && <CircularProgress size={20} />}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  onInputChange={(_, value) => {
+                    handlePatientSearch(value);
+                    handleFormChange('patient.cpf', value);
+                  }}
+                  onChange={(_, value) => {
+                    if (value && typeof value !== 'string') {
+                      handleSelectPatient(value);
+                    }
+                  }}
+                  noOptionsText={
+                    patientSearchTerm.length < 3 
+                      ? 'Digite pelo menos 3 caracteres' 
+                      : 'Nenhum paciente encontrado'
+                  }
+                  loading={searchingPatients}
+                  loadingText="Buscando pacientes..."
                   value={formData.patient?.cpf?.value || ''}
-                  onChange={(e) => handleFormChange('patient.cpf', e.target.value)}
                 />
               </Grid>
             </Grid>
