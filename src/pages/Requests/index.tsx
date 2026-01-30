@@ -541,7 +541,7 @@ const Requests = () => {
                           {option.firstName} {option.lastName}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {option.email} • {formatCpfCnpj(option.cpfCnpj)}
+                          {option.email} • {option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : 'Não informado'}
                         </Typography>
                       </Box>
                     </Box>
@@ -814,7 +814,7 @@ const Requests = () => {
                         Telefone
                       </Typography>
                       <Typography variant="body1">
-                        {formatPhone(selectedRequest.patient.phone)}
+                        {selectedRequest.patient.phone ? formatPhone(selectedRequest.patient.phone) : 'Não informado'}
                       </Typography>
                     </Grid>
 
@@ -823,7 +823,7 @@ const Requests = () => {
                         CPF
                       </Typography>
                       <Typography variant="body1">
-                        {formatCpfCnpj(selectedRequest.patient.cpf)}
+                        {selectedRequest.patient.cpf ? formatCpfCnpj(selectedRequest.patient.cpf) : 'Não informado'}
                       </Typography>
                     </Grid>
                   </>
@@ -1014,7 +1014,7 @@ const Requests = () => {
                           {option.firstName} {option.lastName}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {option.email} • {formatCpfCnpj(option.cpfCnpj)}
+                          {option.email} • {option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : 'Não informado'}
                         </Typography>
                       </Box>
                     </Box>
@@ -1071,13 +1071,13 @@ const Requests = () => {
                   options={patientSearchResults}
                   getOptionLabel={(option) => {
                     if (typeof option === 'string') return option;
-                    return formatCpfCnpj(option.cpfCnpj);
+                    return option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : '';
                   }}
                   renderOption={(props, option) => (
                     <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          {formatCpfCnpj(option.cpfCnpj)}
+                          {option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : 'Não informado'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {option.firstName} {option.lastName} • {option.email}
