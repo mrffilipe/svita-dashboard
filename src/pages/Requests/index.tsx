@@ -38,7 +38,6 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import ClearIcon from '@mui/icons-material/Clear';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
@@ -75,7 +74,6 @@ const Requests = () => {
   const [patientSearchResults, setPatientSearchResults] = useState<UserDto[]>([]);
   const [searchingPatients, setSearchingPatients] = useState(false);
   const [patientSearchTerm, setPatientSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     userTerms: '',
     status: '',
@@ -176,7 +174,7 @@ const Requests = () => {
     if (selectedTenantKey) {
       fetchRequests();
     }
-  }, [page, pageSize, filters, selectedTenantKey]);
+  }, [page, pageSize, selectedTenantKey]);
 
   const handleViewDetails = async (requestId: string) => {
     setLoadingDetail(true);
@@ -528,89 +526,87 @@ const Requests = () => {
           {/* Filtros */}
           <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Filtros
-                </Typography>
-                <IconButton 
-                  onClick={() => setShowFilters(!showFilters)}
-                  size="small"
-                >
-                  {showFilters ? <ClearIcon /> : <FilterListIcon />}
-                </IconButton>
-              </Stack>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Filtros
+              </Typography>
               
-              {showFilters && (
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <TextField
-                      fullWidth
-                      label="Buscar Usuário"
-                      placeholder="Digite 3+ caracteres (nome, CPF ou email)"
-                      value={filters.userTerms}
-                      onChange={(e) => handleFilterChange('userTerms', e.target.value)}
-                      helperText={filters.userTerms && filters.userTerms.length < 3 ? 'Digite pelo menos 3 caracteres' : ''}
-                    />
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <FormControl fullWidth>
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        value={filters.status}
-                        label="Status"
-                        onChange={(e) => handleFilterChange('status', e.target.value)}
-                      >
-                        <MenuItem value="">Todos</MenuItem>
-                        <MenuItem value="AwaitingReview">Aguardando Revisão</MenuItem>
-                        <MenuItem value="InProgress">Em Progresso</MenuItem>
-                        <MenuItem value="Completed">Concluída</MenuItem>
-                        <MenuItem value="Cancelled">Cancelada</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <TextField
-                      fullWidth
-                      label="Data Inicial"
-                      placeholder="DD/MM/YYYY"
-                      value={filters.startDate}
-                      onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                    />
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <TextField
-                      fullWidth
-                      label="Data Final"
-                      placeholder="DD/MM/YYYY"
-                      value={filters.endDate}
-                      onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                    />
-                  </Grid>
-                  
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="contained"
-                        onClick={handleApplyFilters}
-                        disabled={!!(filters.userTerms && filters.userTerms.length < 3)}
-                        fullWidth
-                      >
-                        Aplicar Filtros
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={handleClearFilters}
-                        startIcon={<ClearIcon />}
-                      >
-                        Limpar
-                      </Button>
-                    </Stack>
-                  </Grid>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Buscar Usuário"
+                    placeholder="Digite 3+ caracteres para buscar"
+                    value={filters.userTerms}
+                    onChange={(e) => handleFilterChange('userTerms', e.target.value)}
+                    helperText={
+                      filters.userTerms && filters.userTerms.length < 3 
+                        ? 'Digite pelo menos 3 caracteres para buscar' 
+                        : 'Pesquise por nome, CPF (apenas números) ou email'
+                    }
+                  />
                 </Grid>
-              )}
+                
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={filters.status}
+                      label="Status"
+                      onChange={(e) => handleFilterChange('status', e.target.value)}
+                    >
+                      <MenuItem value="">Todos</MenuItem>
+                      <MenuItem value="AwaitingReview">Aguardando Revisão</MenuItem>
+                      <MenuItem value="InProgress">Em Progresso</MenuItem>
+                      <MenuItem value="Completed">Concluída</MenuItem>
+                      <MenuItem value="Cancelled">Cancelada</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Data Inicial"
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{ max: filters.endDate || undefined }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Data Final"
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{ min: filters.startDate || undefined }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="contained"
+                      onClick={handleApplyFilters}
+                      disabled={!!(filters.userTerms && filters.userTerms.length < 3)}
+                      fullWidth
+                    >
+                      Aplicar Filtros
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={handleClearFilters}
+                      startIcon={<ClearIcon />}
+                    >
+                      Limpar
+                    </Button>
+                  </Stack>
+                </Grid>
+              </Grid>
             </CardContent>
           </Card>
 

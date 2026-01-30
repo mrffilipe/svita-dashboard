@@ -94,7 +94,7 @@ const NavigationMenu = () => {
       show: true 
     },
     { 
-      text: 'Minhas Solicitações', 
+      text: 'Solicitações', 
       icon: <AssignmentIcon />, 
       path: '/requests', 
       show: true 
