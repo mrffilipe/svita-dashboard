@@ -30,12 +30,16 @@ import {
   MenuItem,
   Autocomplete,
   TextField as MuiTextField,
+  Card,
+  CardContent,
 } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ClearIcon from '@mui/icons-material/Clear';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import NavigationMenu from '../../components/NavigationMenu';
 import AddressAutocomplete from '../../components/AddressAutocomplete';
@@ -68,14 +72,16 @@ const Requests = () => {
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
   const [editingRequest, setEditingRequest] = useState<RequestDto | null>(null);
-  const [searchUserTerm, setSearchUserTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<UserDto[]>([]);
-  const [searchingUsers, setSearchingUsers] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
-  const [showUserRequests, setShowUserRequests] = useState(false);
   const [patientSearchResults, setPatientSearchResults] = useState<UserDto[]>([]);
   const [searchingPatients, setSearchingPatients] = useState(false);
   const [patientSearchTerm, setPatientSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    userTerms: '',
+    status: '',
+    startDate: '',
+    endDate: '',
+  });
   const [formData, setFormData] = useState<Partial<RegisterRequestRequest>>({
     pickup: {
       coordinate: { latitude: 0, longitude: 0 },
@@ -95,25 +101,43 @@ const Requests = () => {
   });
 
   const fetchRequests = async () => {
-    const authSession = localStorage.getItem('authSession');
-    if (!authSession) {
-      setError('Sessão não encontrada');
-      setLoading(false);
-      return;
-    }
-
     if (!selectedTenantKey) {
-      setError('Selecione um tenant primeiro');
+      setError('Selecione um tenant para visualizar as solicitações.');
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      const session = JSON.parse(authSession);
-      const userId = session.userId;
-      
-      const result = await requestsService.listByUser(userId, page + 1, pageSize);
+      // Constrói filtros para a API
+      const apiFilters: any = {
+        page: page + 1,
+        pageSize: pageSize,
+      };
+
+      // Adiciona filtros apenas se tiverem valores
+      if (filters.userTerms && filters.userTerms.length >= 3) {
+        apiFilters.userTerms = filters.userTerms;
+      }
+      if (filters.status) {
+        apiFilters.status = filters.status;
+      }
+      if (filters.startDate) {
+        // Converte de DD/MM/YYYY para YYYY/MM/DD
+        const [day, month, year] = filters.startDate.split('/');
+        if (day && month && year) {
+          apiFilters.startDate = `${year}/${month}/${day}`;
+        }
+      }
+      if (filters.endDate) {
+        // Converte de DD/MM/YYYY para YYYY/MM/DD
+        const [day, month, year] = filters.endDate.split('/');
+        if (day && month && year) {
+          apiFilters.endDate = `${year}/${month}/${day}`;
+        }
+      }
+
+      const result = await requestsService.getAll(apiFilters);
       setRequests(result.items);
       setTotalItems(result.totalItems);
       setError(null);
@@ -128,6 +152,31 @@ const Requests = () => {
   useEffect(() => {
     fetchRequests();
   }, [page, pageSize, selectedTenantKey]);
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      userTerms: '',
+      status: '',
+      startDate: '',
+      endDate: '',
+    });
+    setPage(0);
+  };
+
+  const handleApplyFilters = () => {
+    setPage(0);
+    fetchRequests();
+  };
+
+  useEffect(() => {
+    if (selectedTenantKey) {
+      fetchRequests();
+    }
+  }, [page, pageSize, filters, selectedTenantKey]);
 
   const handleViewDetails = async (requestId: string) => {
     setLoadingDetail(true);
@@ -365,67 +414,6 @@ const Requests = () => {
     });
   };
 
-  const handleUserSearch = async (term: string) => {
-    setSearchUserTerm(term);
-    
-    if (term.length < 3) {
-      setSearchResults([]);
-      return;
-    }
-
-    setSearchingUsers(true);
-    try {
-      const results = await userService.search(term);
-      setSearchResults(results);
-    } catch (err: any) {
-      console.error('Erro ao buscar usuários:', err);
-      setSearchResults([]);
-    } finally {
-      setSearchingUsers(false);
-    }
-  };
-
-  const handleSelectUser = (user: UserDto) => {
-    setSelectedUser(user);
-    setShowUserRequests(true);
-    setSearchResults([]);
-    setSearchUserTerm('');
-  };
-
-  const handleBackToMyRequests = () => {
-    setShowUserRequests(false);
-    setSelectedUser(null);
-    setPage(0);
-    fetchRequests();
-  };
-
-  const fetchUserRequests = async () => {
-    if (!selectedTenantKey || !selectedUser) {
-      setError('Selecione um tenant e usuário primeiro');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await requestsService.listByUser(selectedUser.id, page + 1, pageSize);
-      setRequests(result.items);
-      setTotalItems(result.totalItems);
-      setError(null);
-    } catch (err: any) {
-      setError('Erro ao carregar solicitações do usuário');
-      console.error('Error fetching user requests:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (showUserRequests && selectedUser) {
-      fetchUserRequests();
-    }
-  }, [page, pageSize, showUserRequests, selectedUser, selectedTenantKey]);
-
   const handlePatientSearch = async (term: string) => {
     setPatientSearchTerm(term);
     
@@ -522,73 +510,109 @@ const Requests = () => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <AssignmentIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
               <Typography variant="h4" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                {showUserRequests ? `Solicitações de: ${selectedUser?.firstName} ${selectedUser?.lastName}` : 'Minhas Solicitações'}
+                Solicitações
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              {!showUserRequests && (
-                <Autocomplete
-                  freeSolo
-                  options={searchResults}
-                  getOptionLabel={(option) => {
-                    if (typeof option === 'string') return option;
-                    return `${option.firstName} ${option.lastName} (${option.email})`;
-                  }}
-                  renderOption={(props, option) => (
-                    <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {option.firstName} {option.lastName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email} • {option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : 'Não informado'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  )}
-                  renderInput={(params) => (
-                    <MuiTextField
-                      {...params}
-                      label="Buscar usuário (nome, CPF ou email)"
-                      placeholder="Digite 3+ caracteres para buscar..."
-                      onChange={(e) => handleUserSearch(e.target.value)}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {searchingUsers && <CircularProgress size={20} />}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                      sx={{ minWidth: { xs: '100%', sm: 300 } }}
-                    />
-                  )}
-                  onInputChange={(_, value) => handleUserSearch(value)}
-                  onChange={(_, value) => {
-                    if (value && typeof value !== 'string') {
-                      handleSelectUser(value);
-                    }
-                  }}
-                  noOptionsText={
-                    searchUserTerm.length < 3 
-                      ? 'Digite pelo menos 3 caracteres' 
-                      : 'Nenhum usuário encontrado'
-                  }
-                  loading={searchingUsers}
-                  loadingText="Buscando usuários..."
-                />
-              )}
               <Button
                 variant="contained"
-                startIcon={showUserRequests ? <CloseIcon /> : <AddIcon />}
-                onClick={showUserRequests ? handleBackToMyRequests : handleOpenCreateDialog}
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreateDialog}
                 disabled={!selectedTenantKey}
               >
-                {showUserRequests ? 'Voltar' : 'Nova Solicitação'}
+                Nova Solicitação
               </Button>
             </Stack>
           </Stack>
+
+          {/* Filtros */}
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Filtros
+                </Typography>
+                <IconButton 
+                  onClick={() => setShowFilters(!showFilters)}
+                  size="small"
+                >
+                  {showFilters ? <ClearIcon /> : <FilterListIcon />}
+                </IconButton>
+              </Stack>
+              
+              {showFilters && (
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      fullWidth
+                      label="Buscar Usuário"
+                      placeholder="Digite 3+ caracteres (nome, CPF ou email)"
+                      value={filters.userTerms}
+                      onChange={(e) => handleFilterChange('userTerms', e.target.value)}
+                      helperText={filters.userTerms && filters.userTerms.length < 3 ? 'Digite pelo menos 3 caracteres' : ''}
+                    />
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        value={filters.status}
+                        label="Status"
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                      >
+                        <MenuItem value="">Todos</MenuItem>
+                        <MenuItem value="AwaitingReview">Aguardando Revisão</MenuItem>
+                        <MenuItem value="InProgress">Em Progresso</MenuItem>
+                        <MenuItem value="Completed">Concluída</MenuItem>
+                        <MenuItem value="Cancelled">Cancelada</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Data Inicial"
+                      placeholder="DD/MM/YYYY"
+                      value={filters.startDate}
+                      onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                    />
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Data Final"
+                      placeholder="DD/MM/YYYY"
+                      value={filters.endDate}
+                      onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                    />
+                  </Grid>
+                  
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="contained"
+                        onClick={handleApplyFilters}
+                        disabled={!!(filters.userTerms && filters.userTerms.length < 3)}
+                        fullWidth
+                      >
+                        Aplicar Filtros
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={handleClearFilters}
+                        startIcon={<ClearIcon />}
+                      >
+                        Limpar
+                      </Button>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              )}
+            </CardContent>
+          </Card>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
@@ -604,7 +628,7 @@ const Requests = () => {
 
           {!selectedTenantKey ? (
             <Alert severity="warning">
-              Selecione um tenant para visualizar suas solicitações.
+              Selecione um tenant para visualizar as solicitações.
             </Alert>
           ) : loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -612,10 +636,7 @@ const Requests = () => {
             </Box>
           ) : requests.length === 0 ? (
             <Alert severity="info">
-              {showUserRequests 
-                ? `${selectedUser?.firstName} ${selectedUser?.lastName} ainda não possui solicitações.`
-                : 'Você ainda não possui solicitações.'
-              }
+              Nenhuma solicitação encontrada.
             </Alert>
           ) : (
             <>
