@@ -25,13 +25,16 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Autocomplete,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NavigationMenu from '../../components/NavigationMenu';
 import { tenantUsersService } from '../../services';
+import { userService } from '../../services/userService';
 import { useTenant } from '../../contexts/TenantContext';
 import type { TenantUsersListDto, AddTenantUserRequest, TenantMemberRole } from '../../types';
-import { formatEmail, translateTenantMemberRole, translateTenantMemberStatus } from '../../utils';
+import type { UserDto } from '../../types/user';
+import { formatEmail, translateTenantMemberRole, translateTenantMemberStatus, formatCpfCnpj } from '../../utils';
 
 const TenantMembers = () => {
   const { selectedTenantKey } = useTenant();
@@ -44,6 +47,9 @@ const TenantMembers = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [userSearchResults, setUserSearchResults] = useState<UserDto[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
   const [formData, setFormData] = useState<AddTenantUserRequest>({
     email: '',
     role: 'User',
@@ -72,18 +78,40 @@ const TenantMembers = () => {
     fetchMembers();
   }, [page, pageSize, selectedTenantKey]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const handleRoleChange = (role: TenantMemberRole) => {
     setFormData({
       ...formData,
       role,
     });
+  };
+
+  const handleUserSearch = async (term: string) => {
+    setUserSearchTerm(term);
+    
+    if (term.length < 3) {
+      setUserSearchResults([]);
+      return;
+    }
+
+    setSearchingUsers(true);
+    try {
+      const results = await userService.search(term);
+      setUserSearchResults(results);
+    } catch (err: any) {
+      console.error('Erro ao buscar usuários:', err);
+      setUserSearchResults([]);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  const handleSelectUser = (user: UserDto) => {
+    setFormData({
+      ...formData,
+      email: user.email,
+    });
+    setUserSearchResults([]);
+    setUserSearchTerm('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,15 +282,60 @@ const TenantMembers = () => {
           <DialogTitle>Adicionar Membro ao Tenant</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
-              <TextField
-                required
-                fullWidth
-                label="E-mail"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                helperText="E-mail do usuário a ser adicionado"
+              <Autocomplete
+                freeSolo
+                options={userSearchResults}
+                getOptionLabel={(option) => {
+                  if (typeof option === 'string') return option;
+                  return `${option.firstName} ${option.lastName} (${option.email})`;
+                }}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ cursor: 'pointer' }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {option.firstName} {option.lastName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.email} • {option.cpfCnpj ? formatCpfCnpj(option.cpfCnpj) : 'Não informado'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    required
+                    fullWidth
+                    label="E-mail"
+                    placeholder="Digite 3+ caracteres para buscar usuário (nome, CPF ou email)"
+                    helperText={userSearchTerm && userSearchTerm.length < 3 ? 'Digite pelo menos 3 caracteres para buscar' : 'Pesquise por nome, CPF (apenas números) ou email'}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {searchingUsers && <CircularProgress size={20} />}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                onInputChange={(_, value) => handleUserSearch(value)}
+                onChange={(_, value) => {
+                  if (value && typeof value !== 'string') {
+                    handleSelectUser(value);
+                  } else if (typeof value === 'string') {
+                    setFormData({ ...formData, email: value });
+                  }
+                }}
+                value={formData.email || ''}
+                noOptionsText={
+                  userSearchTerm.length < 3 
+                    ? 'Digite pelo menos 3 caracteres' 
+                    : 'Nenhum usuário encontrado'
+                }
+                loading={searchingUsers}
+                loadingText="Buscando usuários..."
               />
               <FormControl fullWidth required>
                 <InputLabel>Função</InputLabel>
